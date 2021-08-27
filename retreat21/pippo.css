@@ -1,4 +1,8 @@
-@import url(http://fonts.googleapis.com/css?family=Julius+Sans+One|Libre+Baskerville:400,400italic);/* base CSS */* {  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */  -moz-box-sizing: border-box;    /* Firefox, other Gecko */  box-sizing: border-box;         /* Opera/IE 8+ */}html, body {  padding: 0;  margin: 0;}body {  color: #325050;  background: #fff;  font-family: 'Libre Baskerville', sans-serif;  font-size: 70%;}
+@import url(https://fonts.googleapis.com/css?family=Julius+Sans+One|Libre+Baskerville:400,400italic);
+/* base CSS */
+* {  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */  -moz-box-sizing: border-box;    /* Firefox, other Gecko */  box-sizing: border-box;         /* Opera/IE 8+ */}
+html, body {  padding: 0;  margin: 0;}
+body {  color: #325050;  background: #fff;  font-family: 'Libre Baskerville', sans-serif;  font-size: 70%;}
 table {
    border: 1px solid black;
 }
@@ -10,15 +14,26 @@ th, td {
 	border-bottom: 1px solid #000;
 }
 tr:hover {background-color: #e0eaff}
-a {  color: #0d8ba1;  -webkit-transition: all 0.25s ease-out;  -moz-transition: all 0.25s ease-out;  transition: all 0.25s ease-out;  text-decoration: none;}  a:visited {    color: #925952;  }  a:hover, a:focus {    color: #0599c2;    text-decoration: underline;  }abbr {  border: none;  text-transform: uppercase;  font-size: 0.9em;  letter-spacing: 0.01em;}header {  height: 230px;  padding: 20px 0 70px 0;  /* background: #6091ba 50% 0 url(CSH_Logo.png) no-repeat; /*old IE fallback */
+a {  color: #0d8ba1;  -webkit-transition: all 0.25s ease-out;  -moz-transition: all 0.25s ease-out;  transition: all 0.25s ease-out;  text-decoration: none;}
+a:visited {    color: #925952;  }
+a:hover, a:focus {    color: #0599c2;    text-decoration: underline;  }
+abbr {  border: none;  text-transform: uppercase;  font-size: 0.9em;  letter-spacing: 0.01em;}
+header {  height: 230px;  padding: 20px 0 70px 0;
+	/* background: #6091ba 50% 0 url(CSH_Logo.png) no-repeat; /*old IE fallback */
   background: #6091ba url("CSH_Logo.png") no-repeat right top;
-  background-size: 30%, auto, auto, cover;  /*background-attachment: fixed, fixed, fixed, scroll;  background-image: url(CSH_Logo.png);  background-position: right top, 0 0, -5px -25px, 0 50%;  background-repeat: no-repeat;  background-size: 30%, auto, auto, cover;  text-align: left;
-  */}
-h1, h2 {  padding: 0 0;  margin: 0;  color: #fff;  font-weight: normal;}h1 {  padding-top: 0;  padding-bottom: 5px;
-  padding-left: 15px;  border-bottom: none;  font-family: 'Julius Sans One', sans-serif;  font-size: 3.2em;  /* text-transform: uppercase; */}/* h1::before {  display: inline-block;  position: relative;  top: 20px;  content: "";  width: 80px;  height: 80px;  margin: -20px 20px 0 0;  background: url(enso.svg);  background-repeat: no-repeat;  background-size: 100%;  opacity: 0.6;}
-*/h2 {  display: block;  padding-top: 5px;  padding-bottom: 30px;
-  padding-left: 30px;  border-top: none;  color: rgba(255,255,255,0.6);  font-size: 1.6em;  font-style: italic;}/* h2::before {  content: " ";  padding: 50px;}
-*/h3 {  margin: 2em 0 0 0;  color: #2e484c;  font-family: 'Julius Sans One', sans-serif;  font-size: 1.8em;  font-weight: normal;  text-transform: uppercase;}p {  margin: 0.75em 0;  line-height: 2;}
+  background-size: 30%, auto, auto, cover;
+	/*background-attachment: fixed, fixed, fixed, scroll;  background-image: url(CSH_Logo.png);  background-position: right top, 0 0, -5px -25px, 0 50%;  background-repeat: no-repeat;  background-size: 30%, auto, auto, cover;  text-align: left;
+  */
+}
+h1, h2 {  padding: 0 0;  margin: 0;  color: #fff;  font-weight: normal;}
+h1 {  padding-top: 0;  padding-bottom: 5px;
+  padding-left: 15px;  border-bottom: none;  font-family: 'Julius Sans One', sans-serif;  font-size: 3.2em;
+	/* text-transform: uppercase; */}/* h1::before {  display: inline-block;  position: relative;  top: 20px;  content: "";  width: 80px;  height: 80px;  margin: -20px 20px 0 0;  background: url(enso.svg);  background-repeat: no-repeat;  background-size: 100%;  opacity: 0.6;}*/
+h2 {  display: block;  padding-top: 5px;  padding-bottom: 30px;
+  padding-left: 30px;  border-top: none;  color: rgba(255,255,255,0.6);  font-size: 1.6em;  font-style: italic;}
+	/* h2::before {  content: " ";  padding: 50px;}*/
+h3 {  margin: 2em 0 0 0;  color: #2e484c;  font-family: 'Julius Sans One', sans-serif;  font-size: 1.8em;  font-weight: normal;  text-transform: uppercase;}
+p {  margin: 0.75em 0;  line-height: 2;}
 .page-wrapper {  position: relative;}
 .summary, .preamble {  width: 80%;  margin: 0 auto;}
 .supporting h3, .supporting p {  width: 80%;  margin-left: auto;  margin-right: auto;}
