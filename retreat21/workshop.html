@@ -1,0 +1,415 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>OMG it's braining workshop 2021</title>
+  <!-- <link rel="SHORTCUT ICON" href="./favico.png"> -->
+
+  <style type="text/css">
+	@import url(https://fonts.googleapis.com/css?family=Julius+Sans+One|Libre+Baskerville:400,400italic);
+
+
+	.tcenter { text-align: center;}
+	.tleft { text-align: left;}
+	.tright { text-align: right;}
+
+	a:link { color: #0000ee;}
+	a:visited { color: #851a8b}
+	a:active { color: #ee0000;}
+	a:hover { color: #ffffff; background-color: green}
+
+      hr {color: sienna}
+
+      body {
+/*	background-image: url('sfondo.jpg');*/
+      background-color: white;
+			color: #000000;
+      margin-left: 5%;
+      margin-right: 5%;
+			font-family: 'Libre Baskerville', sans-serif;
+  		/* font-size: 70%; */
+      /* font: 20px sans-serif; */
+      }
+
+div.head {
+	color: #eeeeee;
+      /* margin-left: 3%; */
+      margin-right: 0%;
+			padding-top: 20px;
+	width: 104%;
+	height: 110px;
+	/* background-image: url('sfondo.jpg');
+	background-repeat: no-repeat;
+ 	background-position: 70% 52%; */
+	background-color: #6091ba;
+	}
+/*
+	img.fotor
+	{
+	float:right;
+	margin:0px 0px 15px 15px;
+	}
+	img.fotol
+	{
+	float:left;
+	margin:0px 15px 15px 0px;
+	}
+*/
+	h1 {font-size: 250%}
+      	h2,h3,h4,h5,h6 { margin-left: -3% }
+	.nota {
+		background-color: #a00000;
+		color: #ffffc0;
+		font-weight: normal;
+		margin: 0px;
+		padding: 10px 50px 10px 50px;
+		text-decoration: blink;
+	}
+
+	.notameno {
+		background-color: #00a000;
+		color: #ffffff;
+		font-weight: normal;
+		margin: 0px;
+		padding: 10px 50px 10px 50px;
+		/*text-decoration: blink;*/
+	}
+
+	ul {line-height: 150%;}
+
+      table.corso {
+	font: 14px sans-serif;
+	empty-cells: show
+      }
+
+      tr.top { background-color: #cbcbcb;}
+      tr.val { background-color: #ffa050; font-weight: bold;}
+      tr.lez { background-color: #ffffb0;}
+      tr.ese { background-color: #d0d0ff;}
+
+	p.data {font-size: small; font-style: italic; text-align: right;}
+
+    </style>
+</head>
+
+<body>
+
+<div class="head">
+	<h1>Workshop "OMG it's braining"</h1>
+	<p style="position: absolute; right: 5%; top: 90px;"> 2021 </p>
+</div>
+
+<p></p>
+
+<h2>Objectives</h2>
+<p>
+	The main focus of this workshop is to favor new collaborations by getting to know each other
+	while working together on a common problem.
+	It is somehow frustrating to spend days or weeks on a problem and then
+	to discover that your colleague next door had already done it years ago.
+	Sharing the same objective of solving a tough problem can help to know the skills of
+	your friends and colleagues and can give birth to a new and efficient problem solving team.
+	<br>
+	It is important to point out that this workshop is not an hackaton, which means that
+	no one wins anything, apart new friends and a possible publication or project proposal,
+	though again, a future publication is not the main goal of the retreat.
+	<br>
+	In the following you can find some ideas that we collected.
+	These are to be considered as catalysts for futher ideas.
+	Once a team is formed, you can be free to steer the discussion towards anything that you like, or
+	stick to the proposed lines.
+	You do not need to work out data, rather try to come up with a more solid plan by finding
+	relevant literature and discussing the subject.
+	<br>
+	Some of the proposed lines are speculative, some others are more data or algorithm oriented.
+	<b>Please choose one subject and find out who would like to work on that, then team up.
+	If large teams form we might split them up, since too large teams are not inclusive enough.
+	If you do not like the subject anymore, feel free to change or start a new one.</b>
+	We do not want bored people hanging around.
+	<br>
+	The only outcome we would like to have is a brief account of what happened during the workshop that
+	one team member can report the day after.
+	It does not need to be results.
+	We are very interested in the dynamics happening in the groups and how problems have been solved.
+	<br>
+	<b> Have fun!</b>
+</p>
+
+<br><br>
+
+<hr><hr>
+<h2>
+	Environmental Costs of Large-scale Language Models
+	(<a href="https://www.csh.ac.at/researcher/max-pellert/" >Max Pellert</a>)
+</h2>
+
+Currently, the paradigm of "larger is better" in NLP leads to models with billions of parameters trained on text corpora of many terabytes with specialized computing infrastructure that offers enough resources to handle those models. The energy consumption is considerable (training BERT on GPU is roughly equivalent to a trans-oceanic flight for example and by now there are way larger models). At the same time, investments in renewable energy sources lead to the proliferation of technologies like photovoltaics that can produce more energy than is needed in certain ideal conditions (during sunny summer days for example). Instead of relying only on batteries, we could use some of that excess energy to train language models to store it in the form of information. I imagine the project to lead to the initial sketch of a whitepaper of the potentials and limitations of this idea for the European Union including some projections in the year 2030 or beyond.
+<br>
+<h3>Some references to start with</h3>
+<ul>
+	<li>
+		<a href="https://doi.org/10.18653/v1/P19-1355">
+			Strubell, E., Ganesh, A., & McCallum, A. (2019).
+			Energy and Policy Considerations for Deep Learning in NLP.
+			Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, 3645–3650.
+		</a>
+	</li>
+	<li>
+		<a href="https://doi.org/10.1145/3442188.3445922">
+			Bender, E. M., Gebru, T., McMillan-Major, A., & Shmitchell, S. (2021). On the Dangers of Stochastic Parrots: Can Language Models Be Too Big? Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency, 610–623.
+				</a>
+	</li>
+
+	<li>
+		Henderson, P., Hu, J., Romoff, J., Brunskill, E., Jurafsky, D., & Pineau, J. (2020). Towards the systematic reporting of the energy and carbon footprints of machine learning. Journal of Machine Learning Research, 21(248), 1–43.
+	</li>
+</ul>
+
+<br><br>
+
+<hr>
+<h2>
+	When does a scientific article become a general reference in its field?
+	(<a href="https://www.csh.ac.at/researcher/jan-korbel/" >Jan Korbel</a>)
+</h2>
+<b>Motivation:</b> everybody knows papers from their fields that are a general reference
+for the field: they have many citations and they are typically cited in the introduction
+as a general reference but are not directly related to the paper itself.
+In many cases, it can be review-papers, but they are often regular papers
+(even not in top journals) that established a new paradigm or new subfield.
+I would be interested in an analysis of when a paper becomes such a general reference,
+after how long time and how many citations, and how it changes the citation rate afterward.
+<br><br>
+For this purpose, I can suggest the simplest classification of general reference that one can think
+of, i.e., if a reference appears in the introduction of the paper, it is considered as a general
+reference, if it appears anywhere else, it is considered as a specific reference.
+Indeed, this is a crude division, and having in mind that some journals do not have sections, one can think about more fine-grained classification, but this is good as a first step.
+<br><br>
+Of course, in general, it is difficult to say whether the reference appears in the introduction or somewhere else since different journals have different formats of their papers and it might be not possible to read off this information. But I remember that Johannes Wachs had an access to either arXiv API or they downloaded the whole arXiv database. The advantage is that most of the papers are there in LaTeX so it is simple to recognize sections etc.
+<br><br>
+Doing systematic work on this DB is too challenging for the workshop, but maybe some preliminary steps can be done. One possibility is to make a 'case study, i.e., to choose a few famous papers and analyze when they became a 'general reference'. Also, one can see whether my hypothesis is correct: some papers can be 'considered as general reference', but they still appear a lot in the rest of the paper since they contain some technical details that are still of direct use. Or maybe one can just identify sentences with an excessive number of citations as e.g., ... which has found applications in a [1-3], b [4-12], and c [13-30]. Or similar sentences.
+<br><br>
+
+<hr>
+<h2>
+	When and where did music become complex?
+	(<a href="https://www.csh.ac.at/researcher/frank-neffke/" >Frank Neffke</a>)
+</h2>
+
+<b>Background</b><br>
+I have to admit, I am not a great connoisseur of music (and definitely not a musician). But arriving in Vienna, I guess music is hard to overlook. What strikes me as interesting is that in antiquity, music seems to have been a fairly non-complex activity. It was played by one or at most a few musicians at the same time. In contrast, "modern" classical music combines hundreds of musicians into orchestras that play a variety of instruments guided by a conductor. Interestingly, music theory far precedes this, going probably further back than ancient Greece. Also, I am unaware (although this may be my ignorance) of large orchestras having emerged outside Europe.
+<br><br>
+<b>Hypothesis</b><br>
+Complex music (e.g., music that is orchestrated across a large set of musicians) happened at the same time and in the same geography as progress and increasing complexity in other fields of human endeavor (technology, science, math, etc.). Of course, it would be even more interesting to have a hypothesis for why this is the case (if it is the case), but I'll leave that for the brainstorm.
+
+<br><br>
+<b>Approach</b><br>
+Can we find databases on music pieces, the year and place in which they were written and the composition of the orchestras they required? A simple starting point is wikipedia, which provides the instrumentation for some music pieces. Another way might be to analyze the complexity of the music itself.
+<br><br>
+<b>Reference</b><br>
+<ul>
+	<li>
+		<a href="http://dx.doi.org/10.1140/epjds/s13688-021-00293-8">
+			"Heaps' law and vocabulary richness in the history of classical music harmony"
+		</a>
+	</li>
+</ul>
+
+<br><br>
+
+<hr>
+<h2>
+	Distilling the truth from news
+	(<a href="https://www.csh.ac.at/researcher/vito-d-p-servedio/" >Vito DP Servedio</a>)
+</h2>
+
+<b>Motivation:</b><br>
+Media present news after filtering and adjusting the content to be published. In doing so, personal ideas, political ideologies and beliefs are injected in the material offered to the public. For this reason, many politicians use to browse multiple newspapers during the day and try to come up with a clean understanding of the facts. They base their ability to distill the truth on their own experience.<br>
+<b>Objective:</b><br>
+From the many sources of information available online, i.e., newspapers, blog posts, twits, etc., try to determine the real unabridged core facts underlying the news and assign a trust score to the different media sources. A confidence level may be associated to the distilled fact, whereas a confidence level of zero would signify that from the considered sources it is not possible to disentangle the truth.<br>
+<b>Reference:</b><br>
+<ul>
+	<li>
+		<a href="https://www.inderscience.com/info/inarticle.php?artid=103971">
+			Identifying journalistically relevant social media texts using human and automatic methodologies
+		</a>
+	</li>
+</ul>
+
+
+<hr>
+
+<br><br>
+
+<h2>
+	Cookbook Networks
+	(<a href="https://www.csh.ac.at/researcher/tobias-reisch/" >Tobias Reisch</a>)
+</h2>
+A cookbook is essentially a bipartite network of meals and ingredients. Encoded in this information is which flavors taste good together and that regional cuisines favor certain flavor combinations [1]. At the CSH we are a diverse mix of cultures that have very different cuisines. In this project we aim to use network science to combine the different cooking styles of the cultures represented at the CSH. <br>
+Start by mapping out the existing space of recipes and then build a program that invents new recipes based on the favourite foods of CSH members. Perhaps we find that some Pecorino Romano is the only ingredient that has been missing for the perfect Chorescht, Samosas work perfectly with Apfelstrudel-filling or Sauerkraut improves greatly with a pinch of Szechuan pepper.<br>
+A data set of machine readable recipes can be found here [2], but feel free to search for additional data sources. Probably network-science based ideas make the most sense, but bonus points are awarded for the project with the most machine learning!<br>
+<b>References:</b><br>
+<ul>
+	<li>
+		<a href="https://www.nature.com/articles/srep00196?fbclid=IwAR3RKRRduloGMhl9ua0mHWevypUhqzGxXMM5DdHgmzyOUspUIMI4GiI2EMM">
+			[1] Ahn, Y. Y., Ahnert, S. E., Bagrow, J. P., & Barabási, A. L. (2011). Flavor network and the principles of food pairing. Scientific reports, 1(1), 1-7.
+		</a>
+	</li>
+	<li>
+		<a href="https://archive.org/details/recipes-en-201706">
+			[2] 140,000 English Recipes in computer-readable form with photos and crawl
+		</a>
+	</li>
+
+</ul>
+
+<hr>
+
+<br><br>
+
+<h2>
+	Moneyballing
+	(<a href="https://www.csh.ac.at/researcher/tobias-reisch/" >Tobias Reisch</a>)
+</h2>
+Sports betting is a huge industry that makes billions of Euros every year [1]. There is a lot of data available on sports and sports betting [1]. However, the betting market has been shown to still contain inefficiencies that can be exploited [2-4]. This challenge asks you to develop an algorithm yourself that consistently outperforms bookmakers and consistently generate revenue. Datasets of scores and betting odds are openly available [6-8]; of course it is strongly encouraged to leverage any other data sources you can find.<br>
+<b>References:</b><br>
+<ul>
+	<li>
+		<a href="https://www.sportsbettingdime.com/guides/research/sports-betting-record-year/">
+			[1]
+		</a>
+	</li>
+	<li>
+		<a href="https://books.google.at/books?hl=de&lr=&id=7LXxCgAAQBAJ&oi=fnd&pg=PT7&dq=sports+betting+data+science&ots=SxX5ylu3X1&sig=CLBmXxDqZnSKyOjW7DgMbMV2Nno#v=onepage&q=sports%20betting%20data%20science&f=false">
+			[1] Miller, T. W. (2015). Sports analytics and data science: winning the game with methods and models. FT Press.
+		</a>
+	</li>
+	<li>
+		<a href="https://link.springer.com/article/10.1007/s40745-018-00189-x">
+			[2] Thabtah, F., Zhang, L., & Abdelhamid, N. (2019). NBA game result prediction using feature analysis and machine learning. Annals of Data Science, 6(1), 103-116.
+		</a>
+	</li>
+	<li>
+		<a href="https://arxiv.org/abs/1710.02824">
+			[4] Kaunitz, L., Zhong, S., & Kreiner, J. (2017). Beating the bookies with their own numbers-and how the online sports betting market is rigged. arXiv preprint arXiv:1710.02824.
+		</a>
+	</li>
+	<li>
+		<a href="https://escholarship.org/content/qt115957mb/qt115957mb.pdf">
+			[5] Dotan, G. (2020). Beating the Book: A Machine Learning Approach to Identifying an Edge in NBA Betting Markets. University of California, Los Angeles.
+		</a>
+	</li>
+	<li>
+		<a href="https://sportsbookreviewsonline.com/scoresoddsarchives/scoresoddsarchives.htm">
+			[6]
+		</a>
+	</li>
+	<li>
+		<a href="https://datahub.io/collections/football">
+			[7]
+		</a>
+	</li>
+	<li>
+		<a href="http://www.football-data.co.uk/germanym.php">
+			[8.1]
+		</a>,
+		<a href="http://www.football-data.co.uk/notes.txt">
+			[8.2]
+		</a>
+	</li>
+
+</ul>
+
+<b>Note 1:</b> If the Hub wants to be funny it can invest 100€ and challenge the team to double the investment as quickly as possible.<br>
+<b>Note 2:</b> Jan Hurt notes that politics betting might be even more interesting. Teams could e.g. investigate the strategy of always betting on the underdog. See e.g.:
+<a href="http://www.uvm.edu/~awoolf/classes/fall2004/election/Historical_Presidential_Betting_Markets.pdf">
+	Reference </a>
+<hr>
+
+<br><br>
+
+<h2>
+	Develop the <i>CSH Educational Toolkit</i>
+	(<a href="https://www.csh.ac.at/researcher/tobias-reisch/" >Tobias Reisch</a>)
+</h2>
+Public outreach is an important part of the mission of a scientific institution like the CSH. We have to convince the public that their tax-money is spent in a meaningful way. Furthermore, outreach targeted at a young audience can motivate more students to pick complexity science related career paths. It would be useful to have a “CSH Educational Toolkit” that teaches complexity science to non-scientists, which can be used when students visit the Hub or there is an event like “Lange Nacht der Forschung” (en: “Long night of science”).<br>
+The key to successful science communication is to engage the visitors: interactivity, visualization and gamification [1]. There are good materials online [2, 3], but we need to collect them and make them available at the CSH. The toolbox could include interactive (online) visualizations, small puzzles participants are challenged to solve or group-games that demonstrate physical (or other) principles. <br>
+<b>References:</b><br>
+<ul>
+	<li>
+		<a href="https://www.csh.ac.at/vito-servedio-visualizations-for-complexity-science-communication/">
+			[1]
+		</a>
+	</li>
+	<li>
+		<a href="https://www.complexity-explorables.org/">
+			[2]
+		</a>
+	</li>
+	<li>
+		<a href="https://csh.ac.at/vis/">
+			[3]
+		</a>
+	</li>
+
+</ul>
+
+
+
+<hr>
+
+<br><br>
+
+<h2>
+	Do pretty stuff
+	(<a href="https://www.csh.ac.at/researcher/tobias-reisch/" >Tobias Reisch</a>)
+</h2>
+Art is a unique cultural phenomenon that has evolved in most (all?) cultures around the world. It can be fulfilling and inspiring to create pieces of art themselves. Not surprising, many scientists have taken it upon themselves to create and discuss art [1, 2]. It remains an open question whether this art is actually good. Therefore, I propose an experiment to decide if artworks created by scientists have artistic value: The participants of this group are asked to create artistic expressions of their research. They will then create a small exhibition on day 2 and the audience will be asked to judge the artistic quality and value of the artwork. We do not want to limit the creativity of the researchers to a certain technique; drawings [3], poems [4], songs [5] or contemporary dance [6] are all warmly welcome. Some materials will be provided, however, if the researchers feel more comfortable with the computer, here are some suggestions [7, 8]. <br>
+<b>References:</b><br>
+<ul>
+	<li>
+		<a href="">
+			[1] Perc, M. (2020). Beauty in artistic expressions through the eyes of networks and physics. Journal of the Royal Society Interface, 17(164), 20190686.
+		</a>
+	</li>
+	<li>
+		<a href="">
+			[2] Several CSH vernissages.
+		</a>
+	</li>
+	<li>
+		<a href="https://theartofeducation.edu/2017/10/26/11-fascinating-artists-inspired-science/">
+			[3] You really expected a reference here? Our papers are full of pretty pictures! But ok, since you’re here already, follow the link
+		</a>
+	</li>
+	<li>
+		<a href="https://www.nature.com/articles/d41586-019-02912-x?utm_source=Nature+Briefing&utm_campaign=c2ac30f962-briefing-dy-wk-20200102&utm_medium=email&utm_term=0_c9dfd39373-c2ac30f962-44592577">
+			[4]
+		</a>
+	</li>
+	<li>
+		<a href="https://www.youtube.com/watch?v=j50ZssEojtM">
+			[5] youtube video
+		</a>
+	</li>
+	<li>
+		<a href="https://www.sciencemag.org/news/2021/03/watch-winners-year-s-dance-your-phd-contest">
+			[6]
+		</a>
+	</li>
+	<li>
+		<a href="https://twitter.com/advadnoun/status/1351038053033406468">
+			[7]
+		</a>
+	</li>
+	<li>
+		<a href="https://aiartists.org/ai-generated-art-tools">
+			[8]
+		</a>
+	</li>
+
+</ul>
+
+<hr><hr>
+
+</body>
+</html>
