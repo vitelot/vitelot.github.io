@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biliardino Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="active" onclick="switchTab('rankings', this)">📊 Rankings</button>
+  <button onclick="switchTab('history', this)">📈 History</button>
+  <button onclick="switchTab('h2h', this)">⚔️ Head-to-Head</button>
+  <button onclick="switchTab('gamelog', this)">📋 Game Log</button>
+</div>
+
+<!-- Tab 1: Rankings -->
+<div id="tab-rankings" class="tab-content active">
+  <div class="section-title">Current Rankings</div>
+  <table id="rankings-table">
+    <thead>
+      <tr>
+        <th data-col="skill">Skill</th>
+        <th data-col="name">Player</th>
+        <th data-col="vitelo">VitELO</th>
+        <th data-col="elo">ELO</th>
+        <th data-col="trueskill_conservative">TrueSkill</th>
+        <th data-col="win_rate">WR</th>
+        <th data-col="atmwr">ATMWR</th>
+        <th data-col="entropy">Entropy</th>
+        <th data-col="games">Games</th>
+        <th data-col="inactivity">Inactive</th>
+      </tr>
+    </thead>
+    <tbody id="rankings-body"></tbody>
+  </table>
+</div>
+
+<!-- Tab 2: History -->
+<div id="tab-history" class="tab-content">
+  <div class="history-layout">
+    <div class="history-controls">
+
+      <!-- Player 1 card -->
+      <div class="player-card p1">
+        <h4>Player 1</h4>
+        <select id="p1-select"></select>
+        <div class="pos-toggle" style="margin-top:8px">
+          <button class="active" data-pos="agg" onclick="setPosToggle(1,'agg',this)">Agg</button>
+          <button data-pos="def" onclick="setPosToggle(1,'def',this)">Def</button>
+          <button data-pos="fwd" onclick="setPosToggle(1,'fwd',this)">Fwd</button>
+        </div>
+        <div class="stat-chips" id="p1-chips"></div>
+      </div>
+
+      <!-- Add Player 2 button (toggles player 2 card) -->
+      <button class="add-player-btn" id="add-p2-btn" onclick="toggleP2()">+ Compare with Player 2</button>
+
+      <!-- Player 2 card (hidden by default) -->
+      <div class="player-card p2" id="p2-card" style="display:none">
+        <h4>Player 2</h4>
+        <select id="p2-select"></select>
+        <div class="pos-toggle" style="margin-top:8px">
+          <button class="active" data-pos="agg" onclick="setPosToggle(2,'agg',this)">Agg</button>
+          <button data-pos="def" onclick="setPosToggle(2,'def',this)">Def</button>
+          <button data-pos="fwd" onclick="setPosToggle(2,'fwd',this)">Fwd</button>
+        </div>
+        <div class="stat-chips" id="p2-chips"></div>
+      </div>
+
+      <!-- Metric selector -->
+      <div class="metric-group">
+        <h4>Metric</h4>
+        <div class="metric-radio">
+          <label><input type="radio" name="metric" value="vitelo" checked onchange="updateChart()"> VitELO</label>
+          <label><input type="radio" name="metric" value="elo" onchange="updateChart()"> ELO</label>
+          <label><input type="radio" name="metric" value="trueskill" onchange="updateChart()"> TrueSkill (μ)</label>
+        </div>
+      </div>
+
+    </div>
+    <div class="history-chart" id="history-chart"></div>
+  </div>
+</div>
+
+<!-- Tab 3: Head-to-Head -->
+<div id="tab-h2h" class="tab-content">
+  <div class="h2h-layout">
+    <div class="h2h-selectors">
+      <select id="h2h-a-select" onchange="updateH2H()"></select>
+      <span style="align-self:center;color:var(--muted)">vs</span>
+      <select id="h2h-b-select" onchange="updateH2H()"></select>
+    </div>
+    <div class="h2h-stat-grid" id="h2h-stats"></div>
+    <div class="section-title">Recent games together</div>
+    <table id="h2h-games-table">
+      <thead><tr><th>Date</th><th>Red Def</th><th>Red Fwd</th><th>Blue Def</th><th>Blue Fwd</th><th>Score</th></tr></thead>
+      <tbody id="h2h-games-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Tab 4: Game Log -->
+<div id="tab-gamelog" class="tab-content">
+  <div class="filter-bar">
+    <input id="game-filter" type="text" placeholder="Filter by player name..." oninput="filterGames()">
+    <span id="game-count" style="color:var(--muted);font-size:13px"></span>
+  </div>
+  <div class="game-log-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Red Def</th><th>Red Fwd</th><th>Blue Def</th><th>Blue Fwd</th><th>Score</th></tr></thead>
+      <tbody id="gamelog-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
