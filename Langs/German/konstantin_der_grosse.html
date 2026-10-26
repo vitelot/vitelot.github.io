@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konstantin der Große · B2 Reader</title>
+<meta name="description" content="An interactive B2-level German reading text on the life of the Roman emperor Constantine the Great, with nouns coloured by gender, hover/tap tooltips showing the dictionary form, grammatical notes and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-head: #ffd166;
+    --tip-note: #c9d1d9;
+    --c-m: #2980B9;   /* masculine noun phrase: blue  */
+    --c-f: #E74C3C;   /* feminine noun phrase: red    */
+    --c-n: #27AE60;   /* neuter noun phrase: green    */
+    --c-v: #B7950B;   /* verb (incl. separable prefix, reflexive pronoun): amber */
+    --c-o: #7F8C8D;   /* other (prepositions, conjunctions, adverbs, pronouns, numbers): grey */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-head: #9a6b00;
+      --tip-note: #4b5563;
+      --c-m: #5DADE2;
+      --c-f: #FF6B5B;
+      --c-n: #2ECC71;
+      --c-v: #F1C40F;
+      --c-o: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-head: #9a6b00;
+    --tip-note: #4b5563;
+    --c-m: #5DADE2;
+    --c-f: #FF6B5B;
+    --c-n: #2ECC71;
+    --c-v: #F1C40F;
+    --c-o: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    min-width: 22px; height: 22px;
+    padding: 0 7px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--c-f) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 21px;
+    line-height: 1.95;
+    margin: 0 0 1.1em;
+    text-align: left;
+    hyphens: manual;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .c-m { color: var(--c-m); }
+  .c-f { color: var(--c-f); }
+  .c-n { color: var(--c-n); }
+  .c-v { color: var(--c-v); }
+  .c-o { color: var(--c-o); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .head {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tip-head);
+    letter-spacing: 0.01em;
+  }
+  #tip .note {
+    font-size: 13px;
+    color: var(--tip-note);
+    font-style: italic;
+  }
+  #tip .en { margin-top: 3px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 19px; line-height: 1.9; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">German reader · CEFR B2 · Roman history</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its dictionary form, a grammar note and its meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Word colour key">
+    <span class="label">Word colours</span>
+    <span class="key"><span class="swatch" style="background:var(--c-m)">der</span>masculine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-f)">die</span>feminine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-n)">das</span>neuter</span>
+    <span class="key"><span class="swatch" style="background:var(--c-v)">Verb</span>verb</span>
+    <span class="key"><span class="swatch" style="background:var(--c-o)">…</span>other</span>
+    <span class="hint">Nouns carry the colour of their grammatical gender (plurals keep the gender of the singular), and so do the articles, determiners and adjectives that agree with them. Verbs are amber, including a separated prefix (brach … aus) and a reflexive pronoun; everything else is grey. A separable verb is one word: hovering either part highlights both and shows the infinitive. On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its dictionary form (infinitive, nominative singular) in one tab per selected dictionary. Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="konstantindergrosse.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 358 words · Constantine the Great, c. 272–337 AD · dictionaries: dict.cc, LEO, DWDS, Wiktionary, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="head"></div>
+  <div class="note"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [surface, head, note, english, colour, link?]
+     surface  the word (or fixed phrase) as written in the text
+     head     dictionary form: nouns with their article (der Krieg), verbs as
+              infinitive (ausbrechen, sich durchsetzen); it is also what the
+              click-to-search looks up (leading article / sich stripped)
+     note     grammatical information about this form (case, tense, declension…)
+     english  meaning in the context of the sentence
+     colour   one letter: m/f/n gender of the noun phrase, v verb, o other
+     link     optional id shared by the parts of one discontinuous word, e.g.
+              a separable verb (brach … aus), a reflexive verb (erholte sich),
+              a circumposition (von … aus) or an idiom (kamen … ums Leben).
+              Linked parts highlight together and show the same tooltip.
+   Punctuation token: a plain string (no tooltip, neutral colour). A space is
+   inserted before every word token unless it is first in the paragraph or the
+   previous token is a string ending in "(" or "„" or whitespace; strings are
+   rendered verbatim, so opening brackets/quotes carry their own leading space.
+*/
+const TITLE = "Konstantin der Große";
+/*DATA-START*/
+const DATA = [
+  [
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.; subject","Constantine","m"],
+    ["wurde","werden","Präteritum, 3rd sg.; passive auxiliary: wurde … geboren = was born","was","v"],
+    ["um","um","preposition + accusative; with dates: around, about","around","o"],
+    ["das","das","definite article, acc. sg. neut.","the","n"],
+    ["Jahr","das Jahr","neuter, acc. sg. (after um)","year","n"],
+    ["272","272","year; read: zweihundertzweiundsiebzig","272","o"],
+    ["n. Chr.","nach Christus","abbreviation; read: nach Christus","AD","o"],
+    ["in","in","preposition + dative (location)","in","o"],
+    ["Naissus","Naissus","proper noun, neuter (cities are neuter), dat. sg.","Naissus","n"],
+    ",",
+    ["dem","der","definite article, dat. sg. neut.; apposition to Naissus","the","n"],
+    ["heutigen","heutig","adjective, dat. sg. neut. (weak declension after dem); from heute","present-day","n"],
+    ["Niš","Niš","proper noun, neuter (city), dat. sg.; apposition","Niš","n"],
+    ["in","in","preposition + dative (location)","in","o"],
+    ["Serbien","Serbien","proper noun, neuter (countries without article are neuter), dat. sg.","Serbia","n"],
+    ",",
+    ["geboren","gebären","Partizip II of gebären (irregular: gebären – gebar – geboren); geboren werden = to be born","born","v"],
+    ".",
+    ["Sein","sein","possessive determiner, nom. sg. masc. (his)","his","m"],
+    ["Vater","der Vater","masculine, nom. sg. (plural with umlaut: die Väter)","father","m"],
+    ["Constantius","Constantius","proper noun, masculine; apposition to Vater","Constantius","m"],
+    ["war","sein","Präteritum, 3rd sg. (irregular: sein – war – gewesen)","was","v"],
+    ["ein","ein","indefinite article, nom. sg. masc.","a","m"],
+    ["hoher","hoch","adjective, nom. sg. masc. (mixed declension after ein); the -c- of hoch drops before an ending: hoh-","high-ranking","m"],
+    ["Offizier","der Offizier","masculine, nom. sg.; stress on the last syllable (-ier)","officer","m"],
+    ",",
+    ["der","der","relative pronoun, nom. sg. masc. (refers to Offizier); the verb goes to the end of the clause","who","o"],
+    ["später","später","adverb of time (comparative of spät)","later","o"],
+    ["zu","zu","preposition + dative; aufsteigen zu = to rise to (the rank of)","to","o"],
+    ["einem","einer","indefinite pronoun, dat. sg. masc. (after zu); einer der + gen. pl. = one of the","one","o"],
+    ["der","der","definite article, gen. pl. (partitive: one of the four emperors)","of the","m"],
+    ["vier","vier","cardinal number","four","o"],
+    ["Kaiser","der Kaiser","masculine, gen. pl. (plural without ending: die Kaiser)","emperors","m"],
+    ["der","der","definite article, gen. sg. fem.","of the","f"],
+    ["Tetrarchie","die Tetrarchie","feminine, gen. sg.; rule of four emperors introduced by Diocletian in 293","Tetrarchy","f"],
+    ["aufstieg","aufsteigen","Präteritum, 3rd sg.; separable verb written together at the end of the relative clause (irregular: aufsteigen – stieg auf – aufgestiegen)","rose","v"],
+    ";",
+    ["seine","sein","possessive determiner, nom. sg. fem.","his","f"],
+    ["Mutter","die Mutter","feminine, nom. sg. (plural with umlaut: die Mütter)","mother","f"],
+    ["Helena","Helena","proper noun, feminine; apposition to Mutter","Helena","f"],
+    ["stammte","stammen","Präteritum, 3rd sg.; stammen aus = to come from (origin)","came","v"],
+    ["aus","aus","preposition + dative (origin)","from","o"],
+    ["einfachen","einfach","adjective, dat. pl. (strong declension, no article)","humble; simple","n"],
+    ["Verhältnissen","das Verhältnis","neuter, dat. pl. (dative plural adds -n); plural die Verhältnisse = circumstances, background","circumstances","n"],
+    ".",
+    ["Als","als","subordinating conjunction (temporal, a single event in the past)","when","o"],
+    ["junger","jung","adjective, nom. sg. masc. (strong declension, no article); als junger Mann = as a young man","young","m"],
+    ["Mann","der Mann","masculine, nom. sg. (plural with umlaut: die Männer)","man","m"],
+    ["lebte","leben","Präteritum, 3rd sg. (regular)","lived","v"],
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["am","am (an + dem)","contraction of an + dem; preposition + dative (location)","at the","o"],
+    ["Hof","der Hof","masculine, dat. sg.; here: the imperial court (plural with umlaut: die Höfe)","court","m"],
+    ["des","der","definite article, gen. sg. masc.","of the","m"],
+    ["Kaisers","der Kaiser","masculine, gen. sg. (-s)","emperor","m"],
+    ["Diokletian","Diokletian","proper noun, masculine; apposition to Kaisers (uninflected)","Diocletian","m"],
+    ["im","im (in + dem)","contraction of in + dem; preposition + dative (location)","in the","o"],
+    ["Osten","der Osten","masculine, dat. sg.; here: the eastern part of the Empire","East","m"],
+    ",",
+    ["wo","wo","relative adverb introducing a relative clause of place","where","o"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["eine","ein","indefinite article, acc. sg. fem.","a","f"],
+    ["militärische","militärisch","adjective, acc. sg. fem. (mixed declension after eine)","military","f"],
+    ["Ausbildung","die Ausbildung","feminine, acc. sg.; from ausbilden = to train","training","f"],
+    ["erhielt","erhalten","Präteritum, 3rd sg. (irregular: erhalten – erhielt – erhalten); verb at the end of the relative clause","received","v"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["Verfolgung","die Verfolgung","feminine, acc. sg.; from verfolgen = to persecute","persecution","f"],
+    ["der","der","definite article, gen. pl.","of the","m"],
+    ["Christen","der Christ","masculine, gen. pl. (weak noun: all forms except nom. sg. end in -en)","Christians","m"],
+    ["miterlebte","miterleben","Präteritum, 3rd sg.; separable verb (mit + erleben), written together at the end of the relative clause","witnessed","v"],
+    ".",
+    ["Als","als","subordinating conjunction (temporal)","when","o"],
+    ["sein","sein","possessive determiner, nom. sg. masc.","his","m"],
+    ["Vater","der Vater","masculine, nom. sg.","father","m"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["306","306","year; read: dreihundertsechs","306","o"],
+    ["in","in","preposition + dative (location)","in","o"],
+    ["Britannien","Britannien","proper noun, neuter, dat. sg.; the Roman province of Britain","Britain","n"],
+    ["starb","sterben","Präteritum, 3rd sg. (irregular: sterben – starb – gestorben); verb at the end of the als-clause","died","v"],
+    ",",
+    ["riefen","ausrufen","Präteritum, 3rd pl.; separable verb, prefix at the end of the clause: riefen … aus (irregular: ausrufen – rief aus – ausgerufen); jemanden zum Kaiser ausrufen = to proclaim someone emperor","proclaimed","v","sv1"],
+    ["ihn","er","personal pronoun, acc. sg. masc.","him","o"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Soldaten","der Soldat","masculine, nom. pl. (weak noun: des Soldaten, die Soldaten)","soldiers","m"],
+    ["zum","zum (zu + dem)","contraction of zu + dem; preposition + dative","(as) emperor","o"],
+    ["Kaiser","der Kaiser","masculine, dat. sg.","emperor","m"],
+    ["aus","ausrufen","separable prefix of ausrufen, at the end of the main clause (belongs to riefen)","(proclaimed)","v","sv1"],
+    ",",
+    ["obwohl","obwohl","subordinating conjunction (concessive); verb at the end","although","o"],
+    ["die","die","definite article, nom. pl.","the","f"],
+    ["Regeln","die Regel","feminine, nom. pl. (-n)","rules","f"],
+    ["der","der","definite article, gen. sg. fem.","of the","f"],
+    ["Tetrarchie","die Tetrarchie","feminine, gen. sg.","Tetrarchy","f"],
+    ["eine","ein","indefinite article, acc. sg. fem.","a","f"],
+    ["solche","solch","demonstrative adjective, acc. sg. fem. (mixed declension after eine)","such","f"],
+    ["Nachfolge","die Nachfolge","feminine, acc. sg.; nach + Folge; here: hereditary succession","succession","f"],
+    ["eigentlich","eigentlich","modal particle / adverb: strictly speaking","actually","o"],
+    ["nicht","nicht","negation adverb","not","o"],
+    ["vorsahen","vorsehen","Präteritum, 3rd pl.; separable verb written together at the end of the obwohl-clause (irregular: vorsehen – sah vor – vorgesehen) = to provide for","provided for","v"],
+    "."
+  ],
+  [
+    ["Es","es","impersonal subject (placeholder); the real subject Jahre follows the verb","there","o"],
+    ["folgten","folgen","Präteritum, 3rd pl. (plural because of the real subject Jahre)","followed","v"],
+    ["Jahre","das Jahr","neuter, nom. pl. (-e)","years","n"],
+    ["des","der","definite article, gen. sg. masc.","of","m"],
+    ["Bürgerkriegs","der Bürgerkrieg","masculine, gen. sg. (-s); compound Bürger + Krieg","civil war","m"],
+    ",",
+    ["in","in","preposition + dative, opening a relative clause: in denen = in which","in","o"],
+    ["denen","die","relative pronoun, dat. pl. (refers to Jahre); dative plural form denen","which","o"],
+    ["mehrere","mehrere","indefinite numeral, nom. pl.","several","m"],
+    ["Herrscher","der Herrscher","masculine, nom. pl. (no ending); from herrschen = to rule","rulers","m"],
+    ["um","um","preposition + accusative; kämpfen um = to fight for","for","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["Macht","die Macht","feminine, acc. sg. (plural with umlaut: die Mächte)","power","f"],
+    ["kämpften","kämpfen","Präteritum, 3rd pl.; verb at the end of the relative clause","fought","v"],
+    ".",
+    ["Die","die","definite article, nom. sg. fem.","the","f"],
+    ["Entscheidung","die Entscheidung","feminine, nom. sg.; from entscheiden; die Entscheidung fällt = the decision is made","decision","f"],
+    ["fiel","fallen","Präteritum, 3rd sg. (irregular: fallen – fiel – gefallen); idiom: die Entscheidung fiel = the matter was decided","fell (was made)","v"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["312","312","year; read: dreihundertzwölf","312","o"],
+    ["an","an","preposition + dative (location)","at","o"],
+    ["der","der","definite article, dat. sg. fem.","the","f"],
+    ["Milvischen","milvisch","adjective, dat. sg. fem. (weak declension after der); capitalised as part of the name","Milvian","f"],
+    ["Brücke","die Brücke","feminine, dat. sg.","Bridge","f"],
+    ["vor","vor","preposition + dative (location)","outside","o"],
+    ["Rom","Rom","proper noun, neuter (city), dat. sg.","Rome","n"],
+    ",",
+    ["wo","wo","relative adverb (place)","where","o"],
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["seinen","sein","possessive determiner, acc. sg. masc.","his","m"],
+    ["Rivalen","der Rivale","masculine, acc. sg. (weak noun: des Rivalen, den Rivalen)","rival","m"],
+    ["Maxentius","Maxentius","proper noun, masculine; apposition to Rivalen","Maxentius","m"],
+    ["besiegte","besiegen","Präteritum, 3rd sg. (regular; inseparable prefix be-); verb at the end of the relative clause","defeated","v"],
+    ".",
+    ["Später","später","adverb of time","later","o"],
+    ["soll","sollen","present, 3rd sg.; sollen + Infinitiv Perfekt (erzählt haben) = is said to have told (reported claim)","is said to","v"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["erzählt","erzählen","Partizip II; part of the Infinitiv Perfekt erzählt haben","told","v"],
+    ["haben","haben","infinitive; completes sollen + Infinitiv Perfekt","have","v"],
+    ",",
+    ["er","er","personal pronoun, nom. sg. masc.; start of the reported speech (indirect speech without dass)","he","o"],
+    ["habe","haben","Konjunktiv I, 3rd sg.; auxiliary of the Perfekt in reported speech: er habe … gesehen = (that) he had seen","had","v"],
+    ["vor","vor","preposition + dative (here: time)","before","o"],
+    ["der","der","definite article, dat. sg. fem.","the","f"],
+    ["Schlacht","die Schlacht","feminine, dat. sg. (plural: die Schlachten)","battle","f"],
+    ["ein","ein","indefinite article, acc. sg. neut.","a","n"],
+    ["Kreuz","das Kreuz","neuter, acc. sg. (plural: die Kreuze)","cross","n"],
+    ["am","am (an + dem)","contraction of an + dem; preposition + dative (location)","in the","o"],
+    ["Himmel","der Himmel","masculine, dat. sg.; sky as well as heaven","sky","m"],
+    ["gesehen","sehen","Partizip II (irregular: sehen – sah – gesehen); at the end of the reported clause","seen","v"],
+    ",",
+    ["das","das","relative pronoun, nom. sg. neut. (refers to Kreuz)","which","o"],
+    ["ihm","er","personal pronoun, dat. sg. masc.","him","o"],
+    ["den","der","definite article, acc. sg. masc.","the","m"],
+    ["Sieg","der Sieg","masculine, acc. sg. (plural: die Siege)","victory","m"],
+    ["versprochen","versprechen","Partizip II (irregular: versprechen – versprach – versprochen); inseparable ver-","promised","v"],
+    ["habe","haben","Konjunktiv I, 3rd sg.; reported speech continues inside the relative clause","had","v"],
+    ".",
+    ["Ob","ob","subordinating conjunction introducing an indirect yes/no question (used as subject of the sentence)","whether","o"],
+    ["diese","dieser","demonstrative determiner, nom. sg. fem.","this","f"],
+    ["Vision","die Vision","feminine, nom. sg.; stress on the last syllable","vision","f"],
+    ["tatsächlich","tatsächlich","adverb; from die Tatsache = fact","actually","o"],
+    ["stattgefunden","stattfinden","Partizip II of the separable verb stattfinden: ge- between prefix and stem (irregular: stattfinden – fand statt – stattgefunden)","taken place","v"],
+    ["hat","haben","present, 3rd sg.; auxiliary of the Perfekt, at the end of the ob-clause","has","v"],
+    ",",
+    ["lässt","sich lassen","present, 3rd sg. (irregular: lassen – ließ – gelassen); sich + Infinitiv lassen = can be (done): lässt sich nicht beweisen = cannot be proven","can","v","rf1"],
+    ["sich","sich lassen","reflexive pronoun, 3rd sg.; belongs to lässt (sich beweisen lassen)","(itself)","v","rf1"],
+    ["nicht","nicht","negation adverb","not","o"],
+    ["beweisen","beweisen","infinitive (irregular: beweisen – bewies – bewiesen); completes lässt sich","be proven","v"],
+    ";",
+    ["doch","doch","coordinating conjunction (adversative, no change of word order)","yet","o"],
+    ["sie","sie","personal pronoun, nom. sg. fem. (refers to Vision)","it","o"],
+    ["gehört","gehören","present, 3rd sg.; gehören zu + dat. = to belong to, to be one of","belongs","v"],
+    ["bis heute","bis heute","adverbial phrase: bis + heute","to this day","o"],
+    ["zu","zu","preposition + dative (with gehören)","to","o"],
+    ["den","der","definite article, dat. pl.","the","f"],
+    ["berühmtesten","berühmt","adjective, superlative, dat. pl. (weak declension after den); berühmt – berühmter – am berühmtesten","most famous","f"],
+    ["Legenden","die Legende","feminine, dat. pl. (-n)","legends","f"],
+    ["der","der","definite article, gen. sg. fem.","of","f"],
+    ["Antike","die Antike","feminine, gen. sg.; classical antiquity","antiquity","f"],
+    ".",
+    ["Im","im (in + dem)","contraction of in + dem; preposition + dative (time)","in the","o"],
+    ["folgenden","folgend","adjective (Partizip I of folgen), dat. sg. neut. (weak declension after dem)","following","n"],
+    ["Jahr","das Jahr","neuter, dat. sg.","year","n"],
+    ["gewährte","gewähren","Präteritum, 3rd sg. (regular; inseparable ge-); jemandem etwas gewähren = to grant someone something (dat. + acc.)","granted","v"],
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["gemeinsam","gemeinsam","adverb; gemeinsam mit + dat. = together with","together","o"],
+    ["mit","mit","preposition + dative","with","o"],
+    ["seinem","sein","possessive determiner, dat. sg. masc.","his","m"],
+    ["Mitkaiser","der Mitkaiser","masculine, dat. sg.; mit + Kaiser = co-emperor","co-emperor","m"],
+    ["Licinius","Licinius","proper noun, masculine; apposition to Mitkaiser","Licinius","m"],
+    ["allen","alle","indefinite determiner, dat. pl. (strong declension)","all","f"],
+    ["Religionen","die Religion","feminine, dat. pl. (-en)","religions","f"],
+    ["des","der","definite article, gen. sg. neut.","of the","n"],
+    ["Reiches","das Reich","neuter, gen. sg. (-es after -ch); das Römische Reich = the Roman Empire","empire","n"],
+    ["die","die","definite article, acc. sg. fem. (direct object of gewährte)","the","f"],
+    ["Freiheit","die Freiheit","feminine, acc. sg.; frei + -heit; here: freedom of worship","freedom","f"],
+    ",",
+    ["eine","ein","indefinite article, nom. sg. fem.; apposition to the whole preceding clause","an","f"],
+    ["Vereinbarung","die Vereinbarung","feminine, nom. sg.; from vereinbaren = to agree on","agreement","f"],
+    ",",
+    ["die","die","relative pronoun, nom. sg. fem. (refers to Vereinbarung)","which","o"],
+    ["als","als","conjunction; als X in die Geschichte eingehen = to go down in history as X","as","o"],
+    ["Mailänder","Mailänder","indeclinable adjective from the city name Mailand (Milan), always capitalised, ending -er","Milanese","f"],
+    ["Vereinbarung","die Vereinbarung","feminine, nom. sg.; the so-called Edict of Milan (313)","agreement","f"],
+    ["in die Geschichte","die Geschichte","in + acc. sg. fem.; part of the idiom in die Geschichte eingehen","into history","f"],
+    ["eingegangen","eingehen","Partizip II of the separable verb eingehen (irregular: eingehen – ging ein – eingegangen); in die Geschichte eingehen = to go down in history","gone down","v"],
+    ["ist","sein","present, 3rd sg.; auxiliary of the Perfekt (sein with eingehen), at the end of the relative clause","has","v"],
+    "."
+  ],
+  [
+    ["Nachdem","nachdem","subordinating conjunction (temporal); the nachdem-clause takes the Plusquamperfekt","after","o"],
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["324","324","year; read: dreihundertvierundzwanzig","324","o"],
+    ["auch","auch","focus adverb","also","o"],
+    ["Licinius","Licinius","proper noun, masculine, acc. sg.","Licinius","m"],
+    ["besiegt","besiegen","Partizip II (inseparable be-, so no ge-); part of the Plusquamperfekt besiegt hatte","defeated","v"],
+    ["hatte","haben","Präteritum, 3rd sg.; auxiliary of the Plusquamperfekt, at the end of the nachdem-clause","had","v"],
+    ",",
+    ["herrschte","herrschen","Präteritum, 3rd sg. (regular); herrschen über + acc. = to rule over","ruled","v"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["als","als","conjunction: in the capacity of","as","o"],
+    ["einziger","einzig","adjective, nom. sg. masc. (strong declension, no article)","sole","m"],
+    ["Kaiser","der Kaiser","masculine, nom. sg.","emperor","m"],
+    ["über","über","preposition + accusative (with herrschen)","over","o"],
+    ["das","das","definite article, acc. sg. neut.","the","n"],
+    ["gesamte","gesamt","adjective, acc. sg. neut. (weak declension after das)","entire","n"],
+    ["Reich","das Reich","neuter, acc. sg.","empire","n"],
+    ".",
+    ["Ein","ein","indefinite article, acc. sg. neut.; ein Jahr später = accusative of time span","one","n"],
+    ["Jahr","das Jahr","neuter, acc. sg. (accusative of duration)","year","n"],
+    ["später","später","adverb","later","o"],
+    ["berief","einberufen","Präteritum, 3rd sg.; separable verb, prefix at the end of the clause: berief … ein (irregular: einberufen – berief ein – einberufen) = to convene","convened","v","sv1"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["das","das","definite article, acc. sg. neut.","the","n"],
+    ["Konzil","das Konzil","neuter, acc. sg.; church council (plural: die Konzilien)","Council","n"],
+    ["von","von","preposition + dative","of","o"],
+    ["Nicäa","Nicäa","proper noun, neuter (city), dat. sg.; today İznik in Turkey","Nicaea","n"],
+    ["ein","einberufen","separable prefix of einberufen, at the end of the main clause (belongs to berief)","(convened)","v","sv1"],
+    ",",
+    ["auf","auf","preposition + dative, opening a relative clause: auf dem = at which (auf einem Konzil = at a council)","at","o"],
+    ["dem","der","relative pronoun, dat. sg. neut. (refers to Konzil)","which","o"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Bischöfe","der Bischof","masculine, nom. pl. (plural with umlaut: die Bischöfe)","bishops","m"],
+    ["über","über","preposition + accusative; streiten über = to argue about","about","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["Natur","die Natur","feminine, acc. sg.; here: nature, essence","nature","f"],
+    ["Christi","Christus","Latin genitive of Christus (the name keeps its Latin declension)","of Christ","m"],
+    ["stritten","streiten","Präteritum, 3rd pl. (irregular: streiten – stritt – gestritten)","argued","v"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["ein","ein","indefinite article, acc. sg. neut.","a","n"],
+    ["gemeinsames","gemeinsam","adjective, acc. sg. neut. (mixed declension after ein)","common","n"],
+    ["Glaubensbekenntnis","das Glaubensbekenntnis","neuter, acc. sg.; compound Glaube + -ns- + Bekenntnis = creed (the Nicene Creed)","creed","n"],
+    ["formulierten","formulieren","Präteritum, 3rd pl. (regular, verb in -ieren); at the end of the relative clause","formulated","v"],
+    ".",
+    ["Zugleich","zugleich","adverb","at the same time","o"],
+    ["ließ","lassen","Präteritum, 3rd sg. (irregular: lassen – ließ – gelassen); lassen + Infinitiv = to have something done: ließ … errichten = had built","had","v"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["am","am (an + dem)","contraction of an + dem; preposition + dative (location)","on the","o"],
+    ["Bosporus","der Bosporus","masculine, dat. sg.; the strait between Europe and Asia","Bosporus","m"],
+    ["eine","ein","indefinite article, acc. sg. fem.","a","f"],
+    ["neue","neu","adjective, acc. sg. fem. (mixed declension after eine)","new","f"],
+    ["Hauptstadt","die Hauptstadt","feminine, acc. sg.; Haupt + Stadt (plural with umlaut: die Hauptstädte)","capital","f"],
+    ["errichten","errichten","infinitive (inseparable er-); completes ließ: ließ … errichten","build","v"],
+    ",",
+    ["die","die","relative pronoun, nom. sg. fem. (refers to Hauptstadt)","which","o"],
+    ["nach","nach","preposition + dative; nach jemandem benennen = to name after someone","after","o"],
+    ["ihm","er","personal pronoun, dat. sg. masc.","him","o"],
+    ["Konstantinopel","Konstantinopel","proper noun, neuter (city), nom. sg.; predicate of genannt","Constantinople","n"],
+    ["genannt","nennen","Partizip II (irregular: nennen – nannte – genannt); passive: genannt wurde = was called","called","v"],
+    ["und","und","coordinating conjunction; the auxiliary wurde serves both participles","and","o"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["330","330","year; read: dreihundertdreißig","330","o"],
+    ["feierlich","feierlich","adverb (adjective used adverbially); from die Feier","ceremonially","o"],
+    ["eingeweiht","einweihen","Partizip II of the separable verb einweihen (ge- between prefix and stem) = to inaugurate","inaugurated","v"],
+    ["wurde","werden","Präteritum, 3rd sg.; passive auxiliary at the end of the relative clause (Präteritum Passiv)","was","v"],
+    ".",
+    ["Die","die","definite article, nom. sg. fem.","the","f"],
+    ["Stadt","die Stadt","feminine, nom. sg. (plural with umlaut: die Städte)","city","f"],
+    ",",
+    ["die","die","relative pronoun, nom. sg. fem. (refers to Stadt)","which","o"],
+    ["auf","auf","preposition + dative (location)","on","o"],
+    ["dem","der","definite article, dat. sg. neut.","the","n"],
+    ["Gebiet","das Gebiet","neuter, dat. sg.; area, territory","site","n"],
+    ["des","der","definite article, gen. sg. neut.","of","n"],
+    ["alten","alt","adjective, gen. sg. neut. (weak declension after des)","old","n"],
+    ["Byzantion","Byzantion","proper noun, neuter (Greek city), gen. sg.; the Greek colony that preceded Constantinople","Byzantium","n"],
+    ["entstand","entstehen","Präteritum, 3rd sg. (irregular: entstehen – entstand – entstanden); at the end of the relative clause","came into being","v"],
+    ",",
+    ["sollte","sollen","Präteritum, 3rd sg.; sollen in the past = was to, was destined to","was to","v"],
+    ["mehr als","mehr als","comparative phrase: more than","more than","o"],
+    ["tausend","tausend","cardinal number","thousand","o"],
+    ["Jahre","das Jahr","neuter, acc. pl. (accusative of duration, with lang)","years","n"],
+    ["lang","lang","postposition-like adverb after a time span: tausend Jahre lang = for a thousand years","long (for)","o"],
+    ["das","das","definite article, nom. sg. neut.","the","n"],
+    ["Zentrum","das Zentrum","neuter, nom. sg. (plural: die Zentren)","centre","n"],
+    ["des","der","definite article, gen. sg. neut.","of the","n"],
+    ["Oströmischen","oströmisch","adjective, gen. sg. neut. (weak declension after des); Ost + römisch; capitalised as part of the name","Eastern Roman","n"],
+    ["Reiches","das Reich","neuter, gen. sg.","Empire","n"],
+    ["bleiben","bleiben","infinitive; completes sollte","remain","v"],
+    "."
+  ],
+  [
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["reformierte","reformieren","Präteritum, 3rd sg. (regular, verb in -ieren)","reformed","v"],
+    ["außerdem","außerdem","adverb","moreover","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["Verwaltung","die Verwaltung","feminine, acc. sg.; from verwalten = to administer","administration","f"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["das","das","definite article, acc. sg. neut.","the","n"],
+    ["Heer","das Heer","neuter, acc. sg. (plural: die Heere)","army","n"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["führte","einführen","Präteritum, 3rd sg.; separable verb, prefix at the end of the clause: führte … ein = introduced","introduced","v","sv1"],
+    ["mit","mit","preposition + dative; mit dem Solidus = in the form of the solidus","with","o"],
+    ["dem","der","definite article, dat. sg. masc.","the","m"],
+    ["Solidus","der Solidus","masculine, dat. sg.; Latin name of the coin","solidus","m"],
+    ["eine","ein","indefinite article, acc. sg. fem.","a","f"],
+    ["Goldmünze","die Goldmünze","feminine, acc. sg.; compound Gold + Münze","gold coin","f"],
+    ["ein","einführen","separable prefix of einführen, at the end of the main clause (belongs to führte)","(introduced)","v","sv1"],
+    ",",
+    ["die","die","relative pronoun, nom. sg. fem. (refers to Goldmünze)","which","o"],
+    ["jahrhundertelang","jahrhundertelang","adverb; Jahrhunderte + -lang = for centuries","for centuries","o"],
+    ["stabil","stabil","adjective, predicative (uninflected)","stable","o"],
+    ["blieb","bleiben","Präteritum, 3rd sg. (irregular: bleiben – blieb – geblieben); at the end of the relative clause","remained","v"],
+    ".",
+    ["Erst","erst","focus adverb: not until, only","only","o"],
+    ["kurz","kurz","adverb; kurz vor = shortly before","shortly","o"],
+    ["vor","vor","preposition + dative (time)","before","o"],
+    ["seinem","sein","possessive determiner, dat. sg. masc.","his","m"],
+    ["Tod","der Tod","masculine, dat. sg.","death","m"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["337","337","year; read: dreihundertsiebenunddreißig","337","o"],
+    ["ließ","sich taufen lassen","Präteritum, 3rd sg.; sich + Infinitiv lassen = to have oneself (done): ließ sich taufen = had himself baptised","had","v","rf1"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["sich","sich taufen lassen","reflexive pronoun, 3rd sg. acc.; belongs to ließ … taufen","himself","v","rf1"],
+    ["taufen","sich taufen lassen","infinitive; completes ließ sich","baptised","v","rf1"],
+    ",",
+    ["wie","wie","subordinating conjunction (comparison): as","as","o"],
+    ["es","es","personal pronoun, acc. sg. neut.; refers to the whole preceding action","it","o"],
+    ["damals","damals","adverb of time","at that time","o"],
+    ["viele","viele","indefinite numeral, nom. pl.","many","m"],
+    ["Gläubige","der Gläubige / die Gläubige","nominalised adjective, nom. pl. (strong declension, no article: Gläubige); from gläubig = believing","believers","m"],
+    ["taten","tun","Präteritum, 3rd pl. (irregular: tun – tat – getan); at the end of the wie-clause","did","v"],
+    ",",
+    ["um","um","um … zu + infinitive: in order to","in order","o"],
+    ["möglichst","möglichst","adverb; möglichst + adjective = as … as possible","as … as possible","o"],
+    ["frei","frei","adjective, predicative; frei von + dat. = free of","free","o"],
+    ["von","von","preposition + dative (with frei)","of","o"],
+    ["Sünden","die Sünde","feminine, dat. pl. (-n)","sins","f"],
+    ["zu","zu","particle of the infinitive clause um … zu","to","o"],
+    ["sterben","sterben","infinitive (irregular: sterben – starb – gestorben)","die","v"],
+    ".",
+    ["Seine","sein","possessive determiner, nom. pl.","his","m"],
+    ["Söhne","der Sohn","masculine, nom. pl. (plural with umlaut: die Söhne)","sons","m"],
+    ["teilten","aufteilen","Präteritum, 3rd pl.; separable verb, prefix at the end of the clause: teilten … auf; etwas unter sich aufteilen = to divide something among themselves","divided","v","sv2"],
+    ["das","das","definite article, acc. sg. neut.","the","n"],
+    ["Reich","das Reich","neuter, acc. sg.","empire","n"],
+    ["unter sich","unter sich","unter + reflexive pronoun (dat. pl.): among themselves","among themselves","o"],
+    ["auf","aufteilen","separable prefix of aufteilen, at the end of the clause (belongs to teilten)","(divided) up","v","sv2"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["bekämpften","bekämpfen","Präteritum, 3rd pl. (inseparable be-); bekämpfen + acc. = to fight against","fought","v"],
+    ["einander","einander","reciprocal pronoun (invariable)","each other","o"],
+    ["erbittert","erbittert","adverb (Partizip II of erbittern used as adjective/adverb)","bitterly","o"],
+    ".",
+    ["Trotz","trotz","preposition + genitive (concessive)","despite","o"],
+    ["dieser","dieser","demonstrative determiner, gen. pl.","these","f"],
+    ["Streitigkeiten","die Streitigkeit","feminine, gen. pl.; from streiten; mostly used in the plural","conflicts","f"],
+    ["gilt","gelten","present, 3rd sg. (irregular: gelten – galt – gegolten; present with vowel change: gilt); gelten als = to be regarded as","is regarded","v"],
+    ["Konstantin","Konstantin","proper noun, masculine, nom. sg.","Constantine","m"],
+    ["als","als","conjunction (with gelten): as","as","o"],
+    ["einer","einer","indefinite pronoun, nom. sg. masc.; einer der + gen. pl. = one of the","one","o"],
+    ["der","der","definite article, gen. pl. (partitive)","of the","m"],
+    ["einflussreichsten","einflussreich","adjective, superlative, gen. pl. (weak declension after der); Einfluss + reich","most influential","m"],
+    ["Herrscher","der Herrscher","masculine, gen. pl. (no ending)","rulers","m"],
+    ["der","der","definite article, gen. sg. fem.","of","f"],
+    ["Geschichte","die Geschichte","feminine, gen. sg.","history","f"],
+    ",",
+    ["weil","weil","subordinating conjunction (causal); verb at the end","because","o"],
+    ["er","er","personal pronoun, nom. sg. masc.","he","o"],
+    ["das","das","definite article, acc. sg. neut.","(the)","n"],
+    ["Christentum","das Christentum","neuter, acc. sg.; Christ + -en- + -tum (nouns in -tum are neuter, except der Irrtum, der Reichtum)","Christianity","n"],
+    ["aus","aus","preposition + dative; aus X zu Y machen = to turn X into Y","from","o"],
+    ["einer","ein","indefinite article, dat. sg. fem.","a","f"],
+    ["verfolgten","verfolgt","adjective (Partizip II of verfolgen), dat. sg. fem. (mixed declension after einer)","persecuted","f"],
+    ["Religion","die Religion","feminine, dat. sg.","religion","f"],
+    ["zur","zur (zu + der)","contraction of zu + der; preposition + dative (result of machen)","into the","o"],
+    ["bevorzugten","bevorzugt","adjective (Partizip II of bevorzugen), dat. sg. fem. (weak declension after der)","favoured","f"],
+    ["Religion","die Religion","feminine, dat. sg.","religion","f"],
+    ["des","der","definite article, gen. sg. neut.","of the","n"],
+    ["Römischen","römisch","adjective, gen. sg. neut. (weak declension after des); capitalised as part of the name","Roman","n"],
+    ["Reiches","das Reich","neuter, gen. sg.","Empire","n"],
+    ["gemacht","machen","Partizip II; part of the Plusquamperfekt gemacht hatte","made","v"],
+    ["hatte","haben","Präteritum, 3rd sg.; auxiliary of the Plusquamperfekt, at the end of the weil-clause","had","v"],
+    ".",
+    ["Die","die","definite article, nom. sg. fem.","the","f"],
+    ["orthodoxe","orthodox","adjective, nom. sg. fem. (weak declension after die)","Orthodox","f"],
+    ["Kirche","die Kirche","feminine, nom. sg.","Church","f"],
+    ["verehrt","verehren","present, 3rd sg. (inseparable ver-); jemanden als X verehren = to venerate someone as X","venerates","v"],
+    ["ihn","er","personal pronoun, acc. sg. masc.","him","o"],
+    ["bis heute","bis heute","adverbial phrase","to this day","o"],
+    ["als","als","conjunction: in the capacity of","as","o"],
+    ["Heiligen","der Heilige","nominalised adjective, acc. sg. masc. (weak declension after als without article: einen Heiligen → als Heiligen); from heilig = holy","saint","m"],
+    "."
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded dictionary form. The selection is
+   remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "dictcc",  name: "dict.cc",    url: "https://www.dict.cc/?s={q}" },
+  { id: "leoit",   name: "LEO de–it",  url: "https://dict.leo.org/italienisch-deutsch/{q}" },
+  { id: "leoen",   name: "LEO de–en",  url: "https://dict.leo.org/englisch-deutsch/{q}" },
+  { id: "dwds",    name: "DWDS",       url: "https://www.dwds.de/wb/{q}" },
+  { id: "wikt",    name: "Wiktionary", url: "https://de.wiktionary.org/wiki/{q}" },
+  { id: "tatoeba", name: "Tatoeba",    url: "https://tatoeba.org/en/sentences/search?from=deu&to=eng&query={q}" }
+];
+const DICT_DEFAULT = ["dictcc"];            // ticked on first visit
+const DICT_STORAGE_KEY = "konstantin_der_grosse.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+  const COLOURS = new Set(["m", "f", "n", "v", "o"]);
+  const NO_SPACE_AFTER = /[(„\s]$/;          // strings after which no space is inserted
+  const ARTICLE = /^(der\/die|der|die|das|ein|sich)\s+/;
+  const PAREN = /\s*\(.*\)$/;               // "am (an + dem)" -> "am"
+
+  DATA.forEach((paragraph, pi) => {
+    const p = document.createElement("p");
+    paragraph.forEach((tok, i) => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const prev = paragraph[i - 1];
+      if (i > 0 && !(typeof prev === "string" && NO_SPACE_AFTER.test(prev))) {
+        p.appendChild(document.createTextNode(" "));
+      }
+      const [surface, head, note, en, colour, link] = tok;
+      if (!COLOURS.has(colour)) {
+        console.warn("Unknown colour code:", surface, colour);
+      }
+      const w = document.createElement("span");
+      w.className = "w c-" + (COLOURS.has(colour) ? colour : "o");
+      w.tabIndex = 0;
+      w.dataset.surface = surface;
+      w.dataset.lookup = head.replace(PAREN, "").replace(ARTICLE, "");
+      w.dataset.head = head;
+      w.dataset.note = note;
+      w.dataset.en = en;
+      if (link) w.dataset.link = pi + ":" + link;   // link ids are scoped to the paragraph
+      w.setAttribute("aria-label", surface + ", " + head + ", " + en);
+      w.textContent = surface;
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipHead = tip.querySelector(".head");
+  const tipNote = tip.querySelector(".note");
+  const tipEn = tip.querySelector(".en");
+  const reader = document.getElementById("reader");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  // All parts of a discontinuous word (separable verb etc.), or just the element.
+  function partsOf(el) {
+    const id = el.dataset.link;
+    if (!id) return [el];
+    return Array.from(reader.querySelectorAll('.w[data-link="' + CSS.escape(id) + '"]'));
+  }
+  function samePart(a, b) {
+    return a === b || (a.dataset.link && a.dataset.link === b.dataset.link);
+  }
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = el;
+    partsOf(el).forEach(x => x.classList.add("active"));
+    tipHead.textContent = el.dataset.head;
+    tipNote.textContent = el.dataset.note;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current && samePart(current, w)) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.lookup);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>
