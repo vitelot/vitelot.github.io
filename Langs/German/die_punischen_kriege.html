@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die Punischen Kriege · B2 Reader</title>
+<meta name="description" content="An interactive B2-level German reading text on the Punic Wars, with nouns coloured by gender, hover/tap tooltips showing the dictionary form, grammatical notes and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-head: #ffd166;
+    --tip-note: #c9d1d9;
+    --c-m: #2980B9;   /* masculine noun phrase: blue  */
+    --c-f: #E74C3C;   /* feminine noun phrase: red    */
+    --c-n: #27AE60;   /* neuter noun phrase: green    */
+    --c-v: #B7950B;   /* verb (incl. separable prefix, reflexive pronoun): amber */
+    --c-o: #7F8C8D;   /* other (prepositions, conjunctions, adverbs, pronouns, numbers): grey */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-head: #9a6b00;
+      --tip-note: #4b5563;
+      --c-m: #5DADE2;
+      --c-f: #FF6B5B;
+      --c-n: #2ECC71;
+      --c-v: #F1C40F;
+      --c-o: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-head: #9a6b00;
+    --tip-note: #4b5563;
+    --c-m: #5DADE2;
+    --c-f: #FF6B5B;
+    --c-n: #2ECC71;
+    --c-v: #F1C40F;
+    --c-o: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    min-width: 22px; height: 22px;
+    padding: 0 7px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--c-f) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 21px;
+    line-height: 1.95;
+    margin: 0 0 1.1em;
+    text-align: left;
+    hyphens: manual;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .c-m { color: var(--c-m); }
+  .c-f { color: var(--c-f); }
+  .c-n { color: var(--c-n); }
+  .c-v { color: var(--c-v); }
+  .c-o { color: var(--c-o); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .head {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tip-head);
+    letter-spacing: 0.01em;
+  }
+  #tip .note {
+    font-size: 13px;
+    color: var(--tip-note);
+    font-style: italic;
+  }
+  #tip .en { margin-top: 3px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 19px; line-height: 1.9; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">German reader · CEFR B2 · Roman history</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its dictionary form, a grammar note and its meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Word colour key">
+    <span class="label">Word colours</span>
+    <span class="key"><span class="swatch" style="background:var(--c-m)">der</span>masculine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-f)">die</span>feminine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-n)">das</span>neuter</span>
+    <span class="key"><span class="swatch" style="background:var(--c-v)">Verb</span>verb</span>
+    <span class="key"><span class="swatch" style="background:var(--c-o)">…</span>other</span>
+    <span class="hint">Nouns carry the colour of their grammatical gender (plurals keep the gender of the singular), and so do the articles, determiners and adjectives that agree with them. Verbs are amber, including a separated prefix (brach … aus) and a reflexive pronoun; everything else is grey. A separable verb is one word: hovering either part highlights both and shows the infinitive. On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its dictionary form (infinitive, nominative singular) in one tab per selected dictionary. Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="diepunischenkriege.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 390 words · the three Punic Wars, 264–146 BC · dictionaries: dict.cc, LEO, DWDS, Wiktionary, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="head"></div>
+  <div class="note"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [surface, head, note, english, colour, link?]
+     surface  the word (or fixed phrase) as written in the text
+     head     dictionary form: nouns with their article (der Krieg), verbs as
+              infinitive (ausbrechen, sich durchsetzen); it is also what the
+              click-to-search looks up (leading article / sich stripped)
+     note     grammatical information about this form (case, tense, declension…)
+     english  meaning in the context of the sentence
+     colour   one letter: m/f/n gender of the noun phrase, v verb, o other
+     link     optional id shared by the parts of one discontinuous word, e.g.
+              a separable verb (brach … aus), a reflexive verb (erholte sich),
+              a circumposition (von … aus) or an idiom (kamen … ums Leben).
+              Linked parts highlight together and show the same tooltip.
+   Punctuation token: a plain string (no tooltip, neutral colour). A space is
+   inserted before every word token unless it is first in the paragraph or the
+   previous token is a string ending in "(" or "„" or whitespace; strings are
+   rendered verbatim, so opening brackets/quotes carry their own leading space.
+*/
+const TITLE = "Die Punischen Kriege";
+/*DATA-START*/
+const DATA = [
+  [
+    ["Zwischen","zwischen","preposition + dative (here: time span)","between","o"],
+    ["264","264","year; read: zweihundertvierundsechzig","264","o"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["146","146","year; read: hundertsechsundvierzig","146","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ["führten","führen","Präteritum, 3rd pl.; Krieg führen = to wage war","waged (war)","v"],
+    ["Rom","Rom","proper noun, neuter (cities are neuter)","Rome","n"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["Karthago","Karthago","proper noun, neuter","Carthage","n"],
+    ["drei","drei","cardinal number","three","o"],
+    ["große","groß","adjective, acc. pl. (strong declension, no article)","great; major","m"],
+    ["Kriege","der Krieg","masculine, acc. pl.","wars","m"],
+    ["gegeneinander","gegeneinander","reciprocal adverb","against each other","o"],
+    ",",
+    ["die","die","relative pronoun, acc. pl. (refers to Kriege); the verb goes to the end of the clause","which","o"],
+    ["wir","wir","personal pronoun, nom. pl.","we","o"],
+    ["heute","heute","adverb of time","today","o"],
+    ["als","als","conjunction; etwas als X bezeichnen = to call something X","as","o"],
+    ["die","die","definite article, acc. pl.","the","m"],
+    ["Punischen","punisch","adjective, acc. pl. (weak declension after die); capitalised as part of the name","Punic","m"],
+    ["Kriege","der Krieg","masculine, acc. pl.","Wars","m"],
+    ["bezeichnen","bezeichnen","present, 1st pl.; verb at the end of the relative clause","call; refer to (as)","v"],
+    ".",
+    ["Der","der","definite article, nom. sg. masc.","the","m"],
+    ["Name","der Name","masculine, nom. sg. (weak noun: des Namens)","name","m"],
+    ["stammt","stammen","present, 3rd sg.; stammen von = to come / derive from","comes (from)","v"],
+    ["von","von","preposition + dative","from","o"],
+    ["den","der","definite article, dat. pl.","the","m"],
+    ["Römern","der Römer","masculine, dat. pl. (dative plural adds -n)","Romans","m"],
+    ",",
+    ["die","die","relative pronoun, nom. pl. (refers to Römern)","who","o"],
+    ["die","die","definite article, acc. pl.","the","m"],
+    ["Karthager","der Karthager","masculine, acc. pl.","Carthaginians","m"],
+    " „",
+    ["Punier","der Punier","masculine, acc. pl.; from Latin Poeni = Phoenicians","Punics","m"],
+    "“",
+    ["nannten","nennen","Präteritum, 3rd pl. (irregular: nennen – nannte – genannt); X Y nennen = to call X Y (both accusative)","called","v"],
+    ",",
+    ["weil","weil","subordinating conjunction; the verb goes to the end of the clause","because","o"],
+    ["die","die","definite article, nom. sg. fem.","the","f"],
+    ["Stadt","die Stadt","feminine, nom. sg.","city","f"],
+    ["Karthago","Karthago","proper noun in apposition","Carthage","n"],
+    ["einst","einst","adverb of time (literary)","once; long ago","o"],
+    ["von","von","preposition + dative; marks the agent in a passive sentence","by","o"],
+    ["Phöniziern","der Phönizier","masculine, dat. pl.","Phoenicians","m"],
+    ["gegründet","gründen","Partizip II; part of the passive","founded","v"],
+    ["worden","werden","Partizip II of the passive auxiliary (without ge-); war … gegründet worden = Plusquamperfekt Passiv","been","v"],
+    ["war","sein","Präteritum, 3rd sg.; auxiliary of the pluperfect passive, at the end of the weil-clause","had","v"],
+    ".",
+    ["Am","am (an + dem)","contraction of an + dem; preposition + dative (point in time)","at the","o"],
+    ["Anfang","der Anfang","masculine, dat. sg.","beginning","m"],
+    ["des","der","definite article, gen. sg. neut.","of the","n"],
+    ["dritten","dritte","ordinal number, gen. sg. neut. (weak declension)","third","n"],
+    ["Jahrhunderts","das Jahrhundert","neuter, gen. sg. (genitive -s)","century","n"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ["beherrschte","beherrschen","Präteritum, 3rd sg.","dominated; controlled","v"],
+    ["Karthago","Karthago","proper noun, subject","Carthage","n"],
+    ["den","der","definite article, acc. sg. masc.","the","m"],
+    ["Handel","der Handel","masculine, acc. sg. (no plural)","trade","m"],
+    ["im","im (in + dem)","contraction of in + dem; preposition + dative (location)","in the","o"],
+    ["westlichen","westlich","adjective, dat. sg. neut. (weak declension)","western","n"],
+    ["Mittelmeer","das Mittelmeer","neuter, dat. sg.","Mediterranean (Sea)","n"],
+    ",",
+    ["während","während","subordinating conjunction expressing contrast (also: preposition + gen. = during)","whereas; while","o"],
+    ["Rom","Rom","proper noun, subject","Rome","n"],
+    ["gerade erst","gerade erst","adverbial phrase","only just","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["italienische","italienisch","adjective, acc. sg. fem. (weak declension)","Italian","f"],
+    ["Halbinsel","die Halbinsel","feminine, acc. sg.; halb + Insel","peninsula","f"],
+    ["unter","unter","preposition + accusative (direction: bringing something under)","under","o"],
+    ["seine","sein","possessive article, acc. sg. fem. (possessor Rom)","its","f"],
+    ["Kontrolle","die Kontrolle","feminine, acc. sg.; etwas unter seine Kontrolle bringen = to bring something under one's control","control","f"],
+    ["gebracht","bringen","Partizip II (irregular: bringen – brachte – gebracht)","brought","v"],
+    ["hatte","haben","Präteritum, 3rd sg.; auxiliary of the Plusquamperfekt (hatte … gebracht)","had","v"],
+    ".",
+    ["Ein","ein","indefinite article, nom. sg. masc.","a","m"],
+    ["Konflikt","der Konflikt","masculine, nom. sg.","conflict","m"],
+    ["zwischen","zwischen","preposition + dative","between","o"],
+    ["den","der","definite article, dat. pl.","the","f"],
+    ["beiden","beide","determiner, dat. pl. (weak declension after den)","two; both","f"],
+    ["Mächten","die Macht","feminine, dat. pl. (umlaut plural Mächte + dative -n)","powers","f"],
+    ["war","sein","Präteritum, 3rd sg.; sein + zu + infinitive = can / must be done","was","v"],
+    ["deshalb","deshalb","adverb (causal)","therefore","o"],
+    ["kaum","kaum","adverb","hardly","o"],
+    ["zu vermeiden","vermeiden","zu + infinitive; war kaum zu vermeiden = could hardly be avoided","to avoid","v"],
+    "."
+  ],
+  [
+    ["Der","der","definite article, nom. sg. masc.","the","m"],
+    ["Erste","erste","ordinal number, nom. sg. masc. (weak declension); capitalised as part of the name","First","m"],
+    ["Punische","punisch","adjective, nom. sg. masc. (weak declension)","Punic","m"],
+    ["Krieg","der Krieg","masculine, nom. sg.","War","m"],
+    " (",
+    ["264–241","264–241","years; read: zweihundertvierundsechzig bis zweihunderteinundvierzig","264–241","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ")",
+    ["brach","ausbrechen","Präteritum, 3rd sg.; separable verb, prefix at the end of the clause: brach … aus (irregular: ausbrechen – brach aus – ausgebrochen)","broke out","v","sv1"],
+    ["wegen","wegen","preposition + genitive","because of","o"],
+    ["der","die","definite article, gen. sg. fem.","of the","f"],
+    ["Insel","die Insel","feminine, gen. sg.","island","f"],
+    ["Sizilien","Sizilien","proper noun, neuter, in apposition","Sicily","n"],
+    ["aus","ausbrechen","separable prefix of ausbrechen, at the end of the main clause (belongs to brach)","(broke) out","v","sv1"],
+    ".",
+    ["Obwohl","obwohl","subordinating conjunction (concessive)","although","o"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Römer","der Römer","masculine, nom. pl.","Romans","m"],
+    ["zu Beginn","der Beginn","fixed phrase: zu + dat. sg. masc.","at the beginning","m"],
+    ["über","über","preposition + accusative, governed by verfügen über = to have at one's disposal","(have) at their disposal","o"],
+    ["keine","kein","negative article, acc. sg. fem.","no","f"],
+    ["nennenswerte","nennenswert","adjective, acc. sg. fem. (mixed declension after keine); nennen + wert = worth mentioning","significant; noteworthy","f"],
+    ["Flotte","die Flotte","feminine, acc. sg.","fleet","f"],
+    ["verfügten","verfügen","Präteritum, 3rd pl.; verfügen über + acc.; verb at the end of the obwohl-clause","had (at their disposal)","v"],
+    ",",
+    ["bauten","bauen","Präteritum, 3rd pl.; main-clause verb directly after the subordinate clause","built","v"],
+    ["sie","sie","personal pronoun, nom. pl. (= die Römer)","they","o"],
+    ["innerhalb","innerhalb","preposition + genitive","within","o"],
+    ["weniger","wenig","determiner, gen. pl. (strong declension)","(of) a few","m"],
+    ["Monate","der Monat","masculine, gen. pl.","months","m"],
+    ["Hunderte","Hunderte","numeral used as a noun, acc. pl.; Hunderte von + dat.","hundreds","o"],
+    ["von","von","preposition + dative","of","o"],
+    ["Kriegsschiffen","das Kriegsschiff","neuter, dat. pl.; compound Krieg + s + Schiff","warships","n"],
+    ["nach dem Vorbild","das Vorbild","fixed phrase: nach dem Vorbild + genitive = modelled on","modelled on (literally: after the model of)","n"],
+    ["eines","ein","indefinite article, gen. sg. neut.","of a","n"],
+    ["gestrandeten","gestrandet","Partizip II of stranden used as an adjective, gen. sg. neut. (mixed declension)","stranded; shipwrecked","n"],
+    ["karthagischen","karthagisch","adjective, gen. sg. neut. (mixed declension)","Carthaginian","n"],
+    ["Schiffes","das Schiff","neuter, gen. sg. (genitive -es)","ship","n"],
+    ".",
+    ["Außerdem","außerdem","adverb; in first position, so the verb comes next (inversion)","moreover","o"],
+    ["erfanden","erfinden","Präteritum, 3rd pl. (irregular: erfinden – erfand – erfunden)","invented","v"],
+    ["sie","sie","personal pronoun, nom. pl. (= die Römer)","they","o"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["sogenannte","sogenannt","adjective, acc. sg. fem. (weak declension)","so-called","f"],
+    ["Enterbrücke","die Enterbrücke","feminine, acc. sg.; entern (to board a ship) + Brücke","boarding bridge (the Roman corvus)","f"],
+    ",",
+    ["mit","mit","preposition + dative","with","o"],
+    ["der","die","relative pronoun, dat. sg. fem. (refers to Enterbrücke)","which","o"],
+    ["sie","sie","personal pronoun, nom. pl.","they","o"],
+    ["feindliche","feindlich","adjective, acc. pl. (strong declension, no article); Feind + -lich","enemy; hostile","n"],
+    ["Schiffe","das Schiff","neuter, acc. pl.","ships","n"],
+    ["festhalten","festhalten","infinitive of a separable verb (fest + halten); written as one word in the infinitive","hold fast; grip","v"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["wie","wie","comparative particle","as (if)","o"],
+    ["an Land","das Land","fixed phrase: an + dat. sg. neut.","on land","n"],
+    ["erobern","erobern","infinitive, depends on konnten","capture; conquer","v"],
+    ["konnten","können","Präteritum, 3rd pl.; modal verb at the very end of the relative clause","could","v"],
+    ".",
+    ["Nach","nach","preposition + dative (time)","after","o"],
+    ["mehr als","mehr als","comparative phrase","more than","o"],
+    ["zwanzig","zwanzig","cardinal number","twenty","o"],
+    ["Jahren","das Jahr","neuter, dat. pl. (dative -n)","years","n"],
+    ["setzten","sich durchsetzen","Präteritum, 3rd pl.; separable reflexive verb: setzten sich … durch","prevailed","v","sv2"],
+    ["sich","sich durchsetzen","reflexive pronoun, 3rd pl.; belongs to sich durchsetzen","(themselves)","v","sv2"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Römer","der Römer","masculine, nom. pl.","Romans","m"],
+    ["schließlich","schließlich","adverb","finally; in the end","o"],
+    ["durch","sich durchsetzen","separable prefix of sich durchsetzen, at the end of the clause (belongs to setzten sich)","(prevailed)","v","sv2"],
+    ":",
+    ["Karthago","Karthago","proper noun, subject","Carthage","n"],
+    ["musste","müssen","Präteritum, 3rd sg.; modal verb, the infinitives follow at the end","had to","v"],
+    ["Sizilien","Sizilien","proper noun, neuter, direct object","Sicily","n"],
+    ["abtreten","abtreten","infinitive of a separable verb (ab + treten), depends on musste","cede; give up","v"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["hohe","hoch","adjective, acc. pl. (strong declension); hoch drops its c before an ending","high; heavy","f"],
+    ["Reparationen","die Reparation","feminine, acc. pl. (almost only used in the plural)","reparations","f"],
+    ["zahlen","zahlen","infinitive, depends on musste","pay","v"],
+    "."
+  ],
+  [
+    ["Im","im (in + dem)","contraction of in + dem; preposition + dative (time: during)","in the","o"],
+    ["Zweiten","zweite","ordinal number, dat. sg. masc. (weak declension); capitalised as part of the name","Second","m"],
+    ["Punischen","punisch","adjective, dat. sg. masc. (weak declension)","Punic","m"],
+    ["Krieg","der Krieg","masculine, dat. sg.","War","m"],
+    " (",
+    ["218–201","218–201","years; read: zweihundertachtzehn bis zweihunderteins","218–201","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ")",
+    ["griff","angreifen","Präteritum, 3rd sg.; separable verb: griff … an (irregular: angreifen – griff an – angegriffen)","attacked","v","sv3"],
+    ["der","der","definite article, nom. sg. masc.","the","m"],
+    ["karthagische","karthagisch","adjective, nom. sg. masc. (weak declension)","Carthaginian","m"],
+    ["Feldherr","der Feldherr","masculine, nom. sg. (weak noun: des Feldherrn, die Feldherren)","general; commander","m"],
+    ["Hannibal","Hannibal","proper noun, masculine, in apposition (Hannibal Barkas, 247–183 BC)","Hannibal","m"],
+    ["Rom","Rom","proper noun, direct object","Rome","n"],
+    ["auf eine Weise","die Weise","fixed phrase: auf + acc. sg. fem.","in a way","f"],
+    ["an","angreifen","separable prefix of angreifen, at the end of the main clause (belongs to griff)","(attacked)","v","sv3"],
+    ",",
+    ["mit","mit","preposition + dative, governed by rechnen mit = to expect","with","o"],
+    ["der","die","relative pronoun, dat. sg. fem. (refers to Weise)","which","o"],
+    ["niemand","niemand","indefinite pronoun, nom.","nobody","o"],
+    ["gerechnet","rechnen","Partizip II; mit etwas rechnen = to expect / reckon with something","expected (reckoned with)","v"],
+    ["hatte","haben","Präteritum, 3rd sg.; auxiliary of the Plusquamperfekt, at the end of the relative clause","had","v"],
+    ".",
+    ["Er","er","personal pronoun, nom. sg. masc. (= Hannibal)","he","o"],
+    ["zog","ziehen","Präteritum, 3rd sg. (irregular: ziehen – zog – gezogen); here: to march, to move","marched","v"],
+    ["mit","mit","preposition + dative","with","o"],
+    ["seinem","sein","possessive article, dat. sg. neut.","his","n"],
+    ["Heer","das Heer","neuter, dat. sg.","army","n"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["etwa","etwa","adverb (approximation)","about; roughly","o"],
+    ["vierzig","vierzig","cardinal number","forty","o"],
+    ["Kriegselefanten","der Kriegselefant","masculine, dat. pl. (weak noun); compound Krieg + s + Elefant","war elephants","m"],
+    ["von","von … aus","first part of the circumposition von + dat. + aus = starting from","from","o","cp1"],
+    ["Spanien","Spanien","proper noun, neuter","Spain","n"],
+    ["aus","von … aus","second part of the circumposition von … aus (belongs to von)","(starting from)","o","cp1"],
+    ["über","über","preposition + accusative (direction: across)","across","o"],
+    ["die","die","definite article, acc. pl.","the","o"],
+    ["Alpen","die Alpen","plural-only noun (Pluraletantum), acc.","Alps","o"],
+    ["nach","nach","preposition + dative (direction, with countries and cities)","to","o"],
+    ["Italien","Italien","proper noun, neuter","Italy","n"],
+    ".",
+    ["Viele","viel","determiner, nom. pl. (strong declension)","many","m"],
+    ["Soldaten","der Soldat","masculine, nom. pl. (weak noun: -en in every form except nom. sg.)","soldiers","m"],
+    ["kamen","ums Leben kommen","Präteritum, 3rd pl.; idiom ums Leben kommen = to die, to lose one's life (completed by ums Leben at the end)","died (lost their lives)","v","id1"],
+    ["in","in","preposition + dative (location)","in","o"],
+    ["den","der","definite article, dat. pl.","the","m"],
+    ["Bergen","der Berg","masculine, dat. pl. (dative -n)","mountains","m"],
+    ["ums Leben","ums Leben kommen","um + das (contracted) + acc. sg. neut.; second part of the idiom ums Leben kommen (belongs to kamen)","(lost their) lives","v","id1"],
+    ",",
+    ["doch","doch","coordinating conjunction (no inversion)","but; yet","o"],
+    ["Hannibal","Hannibal","proper noun, subject","Hannibal","m"],
+    ["gewann","gewinnen","Präteritum, 3rd sg. (irregular: gewinnen – gewann – gewonnen)","won","v"],
+    ["anschließend","anschließend","adverb of time","afterwards; subsequently","o"],
+    ["mehrere","mehrere","determiner, acc. pl.","several","f"],
+    ["Schlachten","die Schlacht","feminine, acc. pl.","battles","f"],
+    ",",
+    ["unter anderem","unter anderem","fixed phrase (abbreviated u. a.)","among them; including","o"],
+    ["bei","bei","preposition + dative; with a place name: at the battle of","at","o"],
+    ["Cannae","Cannae","proper noun, neuter (village in Apulia)","Cannae","n"],
+    ["im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["216","216","year; read: zweihundertsechzehn","216","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ",",
+    ["wo","wo","relative adverb introducing a subordinate clause (verb at the end)","where","o"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Römer","der Römer","masculine, nom. pl.","Romans","m"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["schwerste","schwer","superlative adjective, acc. sg. fem. (weak declension)","worst; heaviest","f"],
+    ["Niederlage","die Niederlage","feminine, acc. sg.; eine Niederlage erleiden = to suffer a defeat","defeat","f"],
+    ["ihrer","ihr","possessive article, gen. sg. fem. (possessor die Römer)","of their","f"],
+    ["Geschichte","die Geschichte","feminine, gen. sg.","history","f"],
+    ["erlitten","erleiden","Präteritum, 3rd pl. (irregular: erleiden – erlitt – erlitten); verb at the end of the wo-clause","suffered","v"],
+    ".",
+    ["Trotzdem","trotzdem","adverb (concessive); in first position, so the verb comes next","nevertheless","o"],
+    ["gelang","gelingen","Präteritum, 3rd sg. (irregular: gelingen – gelang – gelungen); es gelingt jemandem (dat.), etwas zu tun = somebody manages to do something","succeeded","v"],
+    ["es","es","impersonal subject of gelingen","it","o"],
+    ["ihm","er","personal pronoun, dat. sg. masc. (= Hannibal); dative object of gelingen","(for) him","o"],
+    ["nicht","nicht","negation","not","o"],
+    ",",
+    ["Rom","Rom","proper noun, direct object of einzunehmen","Rome","n"],
+    ["selbst","selbst","emphatic particle placed after the noun","itself","o"],
+    ["einzunehmen","einnehmen","zu-infinitive of the separable verb einnehmen: zu is inserted between prefix and stem","to take; to capture","v"],
+    ".",
+    ["Die","die","definite article, nom. pl.","the","m"],
+    ["Römer","der Römer","masculine, nom. pl.","Romans","m"],
+    ["vermieden","vermeiden","Präteritum, 3rd pl. (irregular: vermeiden – vermied – vermieden)","avoided","v"],
+    ["fortan","fortan","adverb of time (literary)","from then on","o"],
+    ["offene","offen","adjective, acc. pl. (strong declension, no article)","open","f"],
+    ["Feldschlachten","die Feldschlacht","feminine, acc. pl.; compound Feld + Schlacht","pitched battles","f"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["griffen","angreifen","Präteritum, 3rd pl.; separable verb: griffen … an","attacked","v","sv4"],
+    ["stattdessen","stattdessen","adverb","instead","o"],
+    ["Karthagos","Karthago","proper noun with genitive -s, placed before the noun it modifies","Carthage's","n"],
+    ["Verbündete","der/die Verbündete","nominalised participle, acc. pl. (declined like an adjective: die Verbündeten, but Karthagos Verbündete)","allies","m"],
+    ["an","angreifen","separable prefix of angreifen, at the end of the clause (belongs to griffen)","(attacked)","v","sv4"],
+    ".",
+    ["Schließlich","schließlich","adverb; in first position, so the verb comes next","finally","o"],
+    ["setzte","übersetzen","Präteritum, 3rd sg.; separable verb über|setzen (stress on über) = to cross water, prefix at the end: setzte … über; not the inseparable übersetzen = to translate","crossed","v","sv5"],
+    ["der","der","definite article, nom. sg. masc.","the","m"],
+    ["junge","jung","adjective, nom. sg. masc. (weak declension)","young","m"],
+    ["Feldherr","der Feldherr","masculine, nom. sg. (weak noun)","general","m"],
+    ["Scipio","Scipio","proper noun, masculine, in apposition (Publius Cornelius Scipio, later called Africanus)","Scipio","m"],
+    ["nach","nach","preposition + dative (direction)","to","o"],
+    ["Afrika","Afrika","proper noun, neuter","Africa","n"],
+    ["über","übersetzen","separable prefix of übersetzen, at the end of the clause (belongs to setzte)","(crossed) over","v","sv5"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["besiegte","besiegen","Präteritum, 3rd sg.; inseparable prefix be- (no ge- in the participle: besiegt)","defeated","v"],
+    ["Hannibal","Hannibal","proper noun, direct object","Hannibal","m"],
+    ["202","202","year; read: zweihundertzwei","202","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ["bei","bei","preposition + dative; with a place name: at the battle of","at","o"],
+    ["Zama","Zama","proper noun, neuter (town in present-day Tunisia)","Zama","n"],
+    "."
+  ],
+  [
+    ["Nach","nach","preposition + dative (time)","after","o"],
+    ["dieser","dieser","demonstrative article, dat. sg. fem.","this","f"],
+    ["Niederlage","die Niederlage","feminine, dat. sg.","defeat","f"],
+    ["verlor","verlieren","Präteritum, 3rd sg. (irregular: verlieren – verlor – verloren)","lost","v"],
+    ["Karthago","Karthago","proper noun, subject","Carthage","n"],
+    ["seine","sein","possessive article, acc. sg. fem. (possessor Karthago)","its","f"],
+    ["Flotte","die Flotte","feminine, acc. sg.","fleet","f"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["seine","sein","possessive article, acc. pl.","its","f"],
+    ["Besitzungen","die Besitzung","feminine, acc. pl.","possessions; territories","f"],
+    ["in","in","preposition + dative (location)","in","o"],
+    ["Spanien","Spanien","proper noun, neuter","Spain","n"],
+    ",",
+    ["erholte","sich erholen","Präteritum, 3rd sg.; reflexive verb: erholte sich","recovered","v","rf1"],
+    ["sich","sich erholen","reflexive pronoun, 3rd sg.; belongs to sich erholen","(itself)","v","rf1"],
+    ["jedoch","jedoch","adverb / conjunction (adversative)","however","o"],
+    ["wirtschaftlich","wirtschaftlich","adjective used as an adverb; Wirtschaft + -lich","economically","o"],
+    ["erstaunlich","erstaunlich","adverb modifying schnell","astonishingly","o"],
+    ["schnell","schnell","adverb","quickly","o"],
+    ".",
+    ["Das","das","demonstrative pronoun, nom. sg. neut.; refers to the whole preceding statement","that","o"],
+    ["beunruhigte","beunruhigen","Präteritum, 3rd sg.; be- + un- + ruhig","worried; alarmed","v"],
+    ["viele","viel","determiner, acc. pl. (strong declension)","many","m"],
+    ["Römer","der Römer","masculine, acc. pl.","Romans","m"],
+    ".",
+    ["Der","der","definite article, nom. sg. masc.","the","m"],
+    ["Senator","der Senator","masculine, nom. sg. (plural: die Senatoren)","senator","m"],
+    ["Cato","Cato","proper noun, masculine, in apposition (Marcus Porcius Cato, 234–149 BC)","Cato","m"],
+    ["soll","sollen","present, 3rd sg.; sollen + Infinitiv Perfekt = is said to have done (reported claim)","is said to","v"],
+    ["jede","jeder","determiner, acc. sg. fem.","every","f"],
+    ["seiner","sein","possessive article, gen. pl. (possessor Cato); jede seiner Reden = each of his speeches","of his","f"],
+    ["Reden","die Rede","feminine, gen. pl.","speeches","f"],
+    ["mit","mit","preposition + dative","with","o"],
+    ["der","die","definite article, dat. sg. fem.","the","f"],
+    ["Forderung","die Forderung","feminine, dat. sg.; fordern + -ung","demand","f"],
+    ["beendet haben","beenden","Infinitiv Perfekt (Partizip II + haben) after the modal verb soll","have ended","v"],
+    ",",
+    ["dass","dass","subordinating conjunction; the verb goes to the end of the clause","that","o"],
+    ["Karthago","Karthago","proper noun, subject of the dass-clause","Carthage","n"],
+    ["zerstört","zerstören","Partizip II; zerstört werden = passive infinitive","destroyed","v"],
+    ["werden","werden","infinitive of the passive auxiliary","be","v"],
+    ["müsse","müssen","Konjunktiv I, 3rd sg.; indirect speech (reports Cato's demand)","must; had to","v"],
+    ".",
+    ["Im Jahr","das Jahr","fixed phrase: in + dem + dat. sg. neut.","in the year","n"],
+    ["149","149","year; read: hundertneunundvierzig","149","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ["brach","ausbrechen","Präteritum, 3rd sg.; separable verb: brach … aus","broke out","v","sv6"],
+    ["der","der","definite article, nom. sg. masc.","the","m"],
+    ["Dritte","dritte","ordinal number, nom. sg. masc. (weak declension); capitalised as part of the name","Third","m"],
+    ["Punische","punisch","adjective, nom. sg. masc. (weak declension)","Punic","m"],
+    ["Krieg","der Krieg","masculine, nom. sg.","War","m"],
+    ["aus","ausbrechen","separable prefix of ausbrechen, at the end of the clause (belongs to brach)","(broke) out","v","sv6"],
+    ".",
+    ["Nach","nach","preposition + dative (time)","after","o"],
+    ["einer","ein","indefinite article, dat. sg. fem.","a","f"],
+    ["dreijährigen","dreijährig","adjective, dat. sg. fem. (mixed declension); drei + Jahr + -ig","three-year","f"],
+    ["Belagerung","die Belagerung","feminine, dat. sg.; belagern + -ung","siege","f"],
+    ["nahmen","einnehmen","Präteritum, 3rd pl.; separable verb: nahmen … ein (irregular: einnehmen – nahm ein – eingenommen)","took; captured","v","sv7"],
+    ["die","die","definite article, nom. pl.","the","m"],
+    ["Römer","der Römer","masculine, nom. pl.","Romans","m"],
+    ["die","die","definite article, acc. sg. fem.","the","f"],
+    ["Stadt","die Stadt","feminine, acc. sg.","city","f"],
+    ["146","146","year; read: hundertsechsundvierzig","146","o"],
+    ["v. Chr.","vor Christus","abbreviation; read: vor Christus","BC","o"],
+    ["ein","einnehmen","separable prefix of einnehmen, at the end of the clause (belongs to nahmen); not the article ein","(took)","v","sv7"],
+    ",",
+    ["brannten","niederbrennen","Präteritum, 3rd pl.; separable verb: brannten … nieder (irregular: brennen – brannte – gebrannt)","burned","v","sv8"],
+    ["sie","sie","personal pronoun, acc. sg. fem. (= die Stadt)","it","o"],
+    ["nieder","niederbrennen","separable prefix of niederbrennen, at the end of the clause (belongs to brannten)","down","v","sv8"],
+    ["und","und","coordinating conjunction","and","o"],
+    ["verkauften","verkaufen","Präteritum, 3rd pl.","sold","v"],
+    ["die","die","definite article, acc. pl.","the","m"],
+    ["Überlebenden","der/die Überlebende","nominalised participle, acc. pl. (weak declension after die)","survivors","m"],
+    ["als","als","conjunction (in the role of)","as","o"],
+    ["Sklaven","der Sklave","masculine, acc. pl. (weak noun)","slaves","m"],
+    ".",
+    ["Das","das","definite article, nom. sg. neut.","the","n"],
+    ["Gebiet","das Gebiet","neuter, nom. sg.","territory","n"],
+    ["wurde","werden","Präteritum, 3rd sg.; werden zu + dat. = to become, to be turned into","became","v"],
+    ["zur","zur (zu + der)","contraction of zu + der; preposition + dative","(into) the","o"],
+    ["römischen","römisch","adjective, dat. sg. fem. (weak declension)","Roman","f"],
+    ["Provinz","die Provinz","feminine, dat. sg.","province","f"],
+    ["Africa","Africa","Latin name of the province, in apposition (the continent is Afrika in German)","Africa","f"],
+    ".",
+    ["Damit","damit","pronominal adverb (da + mit); in first position, so the verb comes next","with that; thereby","o"],
+    ["war","sein","Präteritum, 3rd sg.; auxiliary of the Plusquamperfekt with a verb of movement (war … aufgestiegen)","had","v"],
+    ["Rom","Rom","proper noun, subject","Rome","n"],
+    ["zur","zur (zu + der)","contraction of zu + der; aufsteigen zu + dat. = to rise to (the status of)","to the","o"],
+    ["unangefochtenen","unangefochten","adjective, dat. sg. fem. (weak declension); un- + Partizip II of anfechten (to contest)","undisputed","f"],
+    ["Großmacht","die Großmacht","feminine, dat. sg.; groß + Macht","great power","f"],
+    ["im","im (in + dem)","contraction of in + dem; preposition + dative (location)","in the","o"],
+    ["Mittelmeerraum","der Mittelmeerraum","masculine, dat. sg.; compound Mittelmeer + Raum","Mediterranean region","m"],
+    ["aufgestiegen","aufsteigen","Partizip II of the separable verb aufsteigen: ge- is inserted between prefix and stem (irregular: steigen – stieg – gestiegen)","risen","v"],
+    "."
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded dictionary form. The selection is
+   remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "dictcc",  name: "dict.cc",    url: "https://www.dict.cc/?s={q}" },
+  { id: "leoit",   name: "LEO de–it",  url: "https://dict.leo.org/italienisch-deutsch/{q}" },
+  { id: "leoen",   name: "LEO de–en",  url: "https://dict.leo.org/englisch-deutsch/{q}" },
+  { id: "dwds",    name: "DWDS",       url: "https://www.dwds.de/wb/{q}" },
+  { id: "wikt",    name: "Wiktionary", url: "https://de.wiktionary.org/wiki/{q}" },
+  { id: "tatoeba", name: "Tatoeba",    url: "https://tatoeba.org/en/sentences/search?from=deu&to=eng&query={q}" }
+];
+const DICT_DEFAULT = ["dictcc"];            // ticked on first visit
+const DICT_STORAGE_KEY = "die_punischen_kriege.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+  const COLOURS = new Set(["m", "f", "n", "v", "o"]);
+  const NO_SPACE_AFTER = /[(„\s]$/;          // strings after which no space is inserted
+  const ARTICLE = /^(der\/die|der|die|das|ein|sich)\s+/;
+  const PAREN = /\s*\(.*\)$/;               // "am (an + dem)" -> "am"
+
+  DATA.forEach((paragraph, pi) => {
+    const p = document.createElement("p");
+    paragraph.forEach((tok, i) => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const prev = paragraph[i - 1];
+      if (i > 0 && !(typeof prev === "string" && NO_SPACE_AFTER.test(prev))) {
+        p.appendChild(document.createTextNode(" "));
+      }
+      const [surface, head, note, en, colour, link] = tok;
+      if (!COLOURS.has(colour)) {
+        console.warn("Unknown colour code:", surface, colour);
+      }
+      const w = document.createElement("span");
+      w.className = "w c-" + (COLOURS.has(colour) ? colour : "o");
+      w.tabIndex = 0;
+      w.dataset.surface = surface;
+      w.dataset.lookup = head.replace(PAREN, "").replace(ARTICLE, "");
+      w.dataset.head = head;
+      w.dataset.note = note;
+      w.dataset.en = en;
+      if (link) w.dataset.link = pi + ":" + link;   // link ids are scoped to the paragraph
+      w.setAttribute("aria-label", surface + ", " + head + ", " + en);
+      w.textContent = surface;
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipHead = tip.querySelector(".head");
+  const tipNote = tip.querySelector(".note");
+  const tipEn = tip.querySelector(".en");
+  const reader = document.getElementById("reader");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  // All parts of a discontinuous word (separable verb etc.), or just the element.
+  function partsOf(el) {
+    const id = el.dataset.link;
+    if (!id) return [el];
+    return Array.from(reader.querySelectorAll('.w[data-link="' + CSS.escape(id) + '"]'));
+  }
+  function samePart(a, b) {
+    return a === b || (a.dataset.link && a.dataset.link === b.dataset.link);
+  }
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = el;
+    partsOf(el).forEach(x => x.classList.add("active"));
+    tipHead.textContent = el.dataset.head;
+    tipNote.textContent = el.dataset.note;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current && samePart(current, w)) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.lookup);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>

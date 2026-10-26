@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自我介绍 · A2 Reader</title>
+<meta name="description" content="An interactive A2-level Mandarin reading text with tone-coloured characters, hover/tap tooltips showing pinyin and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-pinyin: #ffd166;
+    --t1: #B7950B;   /* 1st tone: amber (darkened for contrast on light bg) */
+    --t2: #E74C3C;   /* 2nd tone: red   */
+    --t3: #27AE60;   /* 3rd tone: green */
+    --t4: #2980B9;   /* 4th tone: blue  */
+    --t5: #7F8C8D;   /* neutral: gray   */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-pinyin: #9a6b00;
+      --t1: #F1C40F;
+      --t2: #FF6B5B;
+      --t3: #2ECC71;
+      --t4: #5DADE2;
+      --t5: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-pinyin: #9a6b00;
+    --t1: #F1C40F;
+    --t2: #FF6B5B;
+    --t3: #2ECC71;
+    --t4: #5DADE2;
+    --t5: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+                 "Source Han Sans SC", -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--t2) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 24px;
+    line-height: 2.3;
+    margin: 0 0 1.1em;
+    text-align: justify;
+    text-justify: inter-ideograph;
+    letter-spacing: 0.02em;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .t1 { color: var(--t1); }
+  .t2 { color: var(--t2); }
+  .t3 { color: var(--t3); }
+  .t4 { color: var(--t4); }
+  .t5 { color: var(--t5); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(320px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .pinyin {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--tip-pinyin);
+    font-family: "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    letter-spacing: 0.01em;
+  }
+  #tip .en { margin-top: 2px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 22px; line-height: 2.2; text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Mandarin reader · CEFR A2 / HSK 2–3</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its pinyin and meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Tone colour key">
+    <span class="label">Tone colours</span>
+    <span class="key"><span class="swatch" style="background:var(--t1)">ā</span>1st · flat</span>
+    <span class="key"><span class="swatch" style="background:var(--t2)">á</span>2nd · rising</span>
+    <span class="key"><span class="swatch" style="background:var(--t3)">ǎ</span>3rd · dipping</span>
+    <span class="key"><span class="swatch" style="background:var(--t4)">à</span>4th · falling</span>
+    <span class="key"><span class="swatch" style="background:var(--t5)">a</span>neutral</span>
+    <span class="hint">Each character is coloured by its dictionary tone. On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its search in one tab per selected dictionary. Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="ziwojieshao.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 330 characters · self-introduction: name, home town, work, family, languages · dictionaries: MDBG, Arch Chinese, LEO, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="pinyin"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [hanzi, pinyin, english, tones]  where tones = one digit per character (1-4, 5 = neutral).
+   Punctuation token: a plain string (no tooltip, neutral colour).
+*/
+const TITLE = "自我介绍";
+/*DATA-START*/
+const DATA = [
+  [
+    ["大家","dàjiā","everyone","41"],
+    ["好","hǎo","hello (大家好 = hello everyone)","3"],
+    "！",
+    ["我","wǒ","I","3"],
+    ["叫","jiào","to be called","4"],
+    ["维托","Wéituō","Vito","21"],
+    "。",
+    ["一个","yī ge","a; one (+ measure word)","14"],
+    ["中国","Zhōngguó","China; Chinese","12"],
+    ["朋友","péngyou","friend","25"],
+    ["说","shuō","to say","1"],
+    "，",
+    ["我","wǒ","my","3"],
+    ["的","de","(possessive particle)","5"],
+    ["名字","míngzi","name","25"],
+    ["用","yòng","in; using","4"],
+    ["中文","Zhōngwén","Chinese (language)","12"],
+    ["可以","kěyǐ","can; may","33"],
+    ["叫","jiào","to be called","4"],
+    "“",
+    ["维托","Wéituō","Vito","21"],
+    "·",
+    ["塞","Sè","Se (first syllable of Servedio)","4"],
+    "”。",
+    ["我","wǒ","I","3"],
+    ["是","shì","to be","4"],
+    ["意大利人","Yìdàlìrén","Italian (person)","4442"],
+    "，",
+    ["出生","chūshēng","to be born","11"],
+    ["在","zài","in; at","4"],
+    ["一个","yī ge","a (+ measure word)","14"],
+    ["叫","jiào","called; named","4"],
+    ["托里托","Tuōlǐtuō","Toritto","131"],
+    ["的","de","(attributive particle)","5"],
+    ["小镇","xiǎozhèn","small town","34"],
+    "，",
+    ["离","lí","(distance) from","2"],
+    ["巴里","Bālǐ","Bari","13"],
+    ["很","hěn","very","3"],
+    ["近","jìn","near; close","4"],
+    "。",
+    ["现在","xiànzài","now","44"],
+    ["我","wǒ","I","3"],
+    ["住在","zhù zài","to live in","44"],
+    ["奥地利","Àodìlì","Austria","444"],
+    ["的","de","(possessive particle: Austria's)","5"],
+    ["维也纳","Wéiyěnà","Vienna","234"],
+    "。"
+  ],
+  [
+    ["我","wǒ","I","3"],
+    ["是","shì","to be","4"],
+    ["一名","yī míng","a (measure word for people in a profession)","12"],
+    ["科学家","kēxuéjiā","scientist","121"],
+    "，",
+    ["在","zài","at","4"],
+    ["一个","yī ge","a (+ measure word)","14"],
+    ["研究所","yánjiūsuǒ","research institute","213"],
+    ["工作","gōngzuò","to work","14"],
+    "。",
+    ["我","wǒ","I","3"],
+    ["研究","yánjiū","to research; to study","21"],
+    ["复杂","fùzá","complex; complicated","42"],
+    ["系统","xìtǒng","system(s)","43"],
+    "，",
+    ["比如","bǐrú","for example","32"],
+    ["人","rén","people","2"],
+    ["和","hé","and","2"],
+    ["人","rén","people","2"],
+    ["之间","zhījiān","between","11"],
+    ["的","de","(attributive particle)","5"],
+    ["关系","guānxì","relationship(s); connections","14"],
+    "。",
+    ["以前","yǐqián","before; formerly","32"],
+    ["我","wǒ","I","3"],
+    ["在","zài","in","4"],
+    ["罗马","Luómǎ","Rome","23"],
+    ["上大学","shàng dàxué","to go to university","442"],
+    "，",
+    ["学","xué","to study","2"],
+    ["物理","wùlǐ","physics","43"],
+    "，",
+    ["后来","hòulái","later; afterwards","42"],
+    ["又","yòu","then; in addition","4"],
+    ["去","qù","to go to","4"],
+    ["德国","Déguó","Germany","22"],
+    ["的","de","(possessive particle: Germany's)","5"],
+    ["德累斯顿","Délèisīdùn","Dresden","2414"],
+    ["读","dú","to study (for a degree)","2"],
+    ["博士","bóshì","doctorate; PhD","24"],
+    "。"
+  ],
+  [
+    ["我","wǒ","I","3"],
+    ["有","yǒu","to have","3"],
+    ["一个","yī ge","a (+ measure word)","14"],
+    ["伴侣","bànlǚ","partner","43"],
+    ["和","hé","and","2"],
+    ["两个","liǎng ge","two (+ measure word)","34"],
+    ["女儿","nǚ'ér","daughter(s)","32"],
+    "。",
+    ["我们","wǒmen","we","35"],
+    ["一家人","yījiārén","the whole family","112"],
+    ["都","dōu","all","1"],
+    ["很","hěn","very","3"],
+    ["喜欢","xǐhuan","to like","35"],
+    ["看书","kànshū","to read (books)","41"],
+    "。",
+    ["我","wǒ","I","3"],
+    ["特别","tèbié","especially","42"],
+    ["喜欢","xǐhuan","to like","35"],
+    ["科幻小说","kēhuàn xiǎoshuō","science fiction (novels)","1431"],
+    ["和","hé","and","2"],
+    ["历史","lìshǐ","history","43"],
+    "。",
+    ["周末","zhōumò","weekend","14"],
+    ["的时候","de shíhou","when; at the time of","525"],
+    "，",
+    ["我","wǒ","I","3"],
+    ["常常","chángcháng","often","22"],
+    ["和","hé","with","2"],
+    ["女儿们","nǚ'érmen","(my) daughters (们 = plural)","325"],
+    ["一起","yīqǐ","together","13"],
+    ["看","kàn","to watch","4"],
+    ["电影","diànyǐng","movie(s)","43"],
+    "。"
+  ],
+  [
+    ["我","wǒ","I","3"],
+    ["也","yě","also","3"],
+    ["很","hěn","very","3"],
+    ["喜欢","xǐhuan","to like","35"],
+    ["学","xué","to learn","2"],
+    ["语言","yǔyán","language(s)","32"],
+    "。",
+    ["我","wǒ","I","3"],
+    ["会","huì","can; to know how to","4"],
+    ["说","shuō","to speak","1"],
+    ["意大利语","Yìdàlìyǔ","Italian (language)","4443"],
+    "、",
+    ["英语","Yīngyǔ","English","13"],
+    "、",
+    ["德语","Déyǔ","German","23"],
+    ["和","hé","and","2"],
+    ["西班牙语","Xībānyáyǔ","Spanish","1123"],
+    "，",
+    ["现在","xiànzài","now","44"],
+    ["还","hái","in addition; also","2"],
+    ["在","zài","(marks an action in progress)","4"],
+    ["学","xué","to learn","2"],
+    ["汉语","Hànyǔ","Chinese (language)","43"],
+    ["和","hé","and","2"],
+    ["日语","Rìyǔ","Japanese (language)","43"],
+    "。",
+    ["我","wǒ","my","3"],
+    ["的","de","(possessive particle)","5"],
+    ["伯伯","bóbo","uncle (father's older brother; 叔叔 = father's younger brother)","25"],
+    ["叫","jiào","to be called","4"],
+    ["彼得罗","Bǐdéluó","Pietro","322"],
+    "，",
+    ["是","shì","to be","4"],
+    ["我","wǒ","my","3"],
+    ["爸爸","bàba","dad","45"],
+    ["的","de","(possessive particle)","5"],
+    ["哥哥","gēge","older brother","15"],
+    "。",
+    ["他","tā","he","1"],
+    ["会","huì","can; to know how to","4"],
+    ["说","shuō","to speak","1"],
+    ["十一","shíyī","eleven","21"],
+    ["种","zhǒng","kind; type (measure word)","3"],
+    ["语言","yǔyán","language(s)","32"],
+    "！",
+    ["五十年代","wǔshí niándài","the 1950s","3324"],
+    "，",
+    ["他","tā","he","1"],
+    ["是","shì","to be","4"],
+    ["最早","zuìzǎo","earliest; first","43"],
+    ["去","qù","to go to","4"],
+    ["中国","Zhōngguó","China","12"],
+    ["的","de","(attributive particle)","5"],
+    ["西方人","Xīfāngrén","Westerner(s)","112"],
+    ["之一","zhīyī","one of (…之一 = one of the …)","11"],
+    "，",
+    ["在","zài","in","4"],
+    ["北京","Běijīng","Beijing (Peking)","31"],
+    ["住了","zhù le","lived (了 = completed action)","45"],
+    ["三年","sān nián","three years","12"],
+    "。",
+    ["十年前","shí nián qián","ten years ago","222"],
+    "，",
+    ["他","tā","he","1"],
+    ["去世","qùshì","to pass away","44"],
+    ["了","le","(particle: completed action)","5"],
+    "，",
+    ["那时候","nà shíhou","at that time","425"],
+    ["他","tā","he","1"],
+    ["九十二岁","jiǔshí'èr suì","92 years old","3444"],
+    "。",
+    ["我","wǒ","I","3"],
+    ["希望","xīwàng","to hope","14"],
+    ["以后","yǐhòu","in the future; later","34"],
+    ["也","yě","also","3"],
+    ["能","néng","can; to be able to","2"],
+    ["像","xiàng","to be like","4"],
+    ["他","tā","him","1"],
+    ["一样","yīyàng","the same (像…一样 = just like …)","14"],
+    "。"
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded word. The selection is remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "mdbg",    name: "MDBG",         url: "https://www.mdbg.net/chinese/dictionary?page=worddict&email=&wdrst=0&wdqb={q}" },
+  { id: "arch",    name: "Arch Chinese", url: "https://www.archchinese.com/chinese_english_dictionary.html?find={q}" },
+  { id: "leo",     name: "LEO zh–de",    url: "https://dict.leo.org/chinesisch-deutsch/{q}" },
+  { id: "tatoeba", name: "Tatoeba",      url: "https://tatoeba.org/en/sentences/search?query={q}" }
+];
+const DICT_DEFAULT = ["mdbg"];              // ticked on first visit
+const DICT_STORAGE_KEY = "zi_wo_jie_shao.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+
+  DATA.forEach(paragraph => {
+    const p = document.createElement("p");
+    paragraph.forEach(tok => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const [hanzi, pinyin, en, tones] = tok;
+      const chars = Array.from(hanzi);
+      if (chars.length !== tones.length) {
+        console.warn("Tone/character length mismatch:", hanzi, tones);
+      }
+      const w = document.createElement("span");
+      w.className = "w";
+      w.tabIndex = 0;
+      w.dataset.hanzi = hanzi;
+      w.dataset.pinyin = pinyin;
+      w.dataset.en = en;
+      w.setAttribute("aria-label", hanzi + ", " + pinyin + ", " + en);
+      chars.forEach((ch, i) => {
+        const c = document.createElement("span");
+        const t = tones[i] || "5";
+        c.className = "t" + t;
+        c.textContent = ch;
+        w.appendChild(c);
+      });
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipPinyin = tip.querySelector(".pinyin");
+  const tipEn = tip.querySelector(".en");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) current.classList.remove("active");
+    current = el;
+    el.classList.add("active");
+    tipPinyin.textContent = el.dataset.pinyin;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) current.classList.remove("active");
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  const reader = document.getElementById("reader");
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current === w) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.hanzi);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>

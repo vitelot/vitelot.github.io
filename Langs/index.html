@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Language Readers</title>
+<meta name="description" content="Interactive reading texts for language learners: coloured words, hover tooltips with dictionary form and meaning, click-to-search in online dictionaries, and an audio recording of every text.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --c-m: #2980B9;
+    --c-f: #E74C3C;
+    --c-n: #27AE60;
+    --c-v: #B7950B;
+    --c-o: #7F8C8D;
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --c-m: #5DADE2;
+      --c-f: #FF6B5B;
+      --c-n: #2ECC71;
+      --c-v: #F1C40F;
+      --c-o: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --c-m: #5DADE2;
+    --c-f: #FF6B5B;
+    --c-n: #2ECC71;
+    --c-v: #F1C40F;
+    --c-o: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+  .page { max-width: 860px; margin: 0 auto; }
+
+  header { margin-bottom: 28px; }
+  .eyebrow {
+    margin: 0 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 { margin: 0 0 10px; font-size: 34px; line-height: 1.2; }
+  .subtitle { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 640px; }
+
+  .howto {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin-bottom: 28px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .howto strong { color: var(--ink); }
+  .howto ul { margin: 8px 0 0; padding-left: 20px; }
+  .howto li { margin: 4px 0; }
+
+  h2 {
+    margin: 32px 0 12px;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  h2 .native { text-transform: none; letter-spacing: 0; font-size: 18px; color: var(--ink); }
+  h2 .scheme { font-weight: normal; letter-spacing: 0; text-transform: none; font-size: 13px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px 16px;
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .card:hover, .card:focus-visible { transform: translateY(-2px); border-color: var(--accent); outline: none; }
+  .card .level {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .card .title {
+    margin: 0 44px 2px 0;
+    font-size: 24px;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+  .card .title.cjk { font-size: 28px; }
+  .card .reading { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-style: italic; }
+  .card .topic { margin: 0 0 12px; font-size: 15px; line-height: 1.55; }
+  .card .meta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  .card .meta span::before { content: ""; }
+  .card .open {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .palette { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
+  .palette i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+
+  footer {
+    margin-top: 40px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  footer a { color: var(--accent); }
+
+  @media (max-width: 520px) {
+    body { padding: 24px 16px 60px; }
+    h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Interactive reading texts</p>
+    <h1>Language Readers</h1>
+    <p class="subtitle">Short texts for language learners, one page each: every word is coloured by its grammatical role and carries a tooltip with its dictionary form, a note and the English meaning. Click a word to look it up in online dictionaries; listen to the recording while you read.</p>
+  </header>
+
+  <div class="howto">
+    <strong>How to use a reader</strong>
+    <ul>
+      <li><strong>Hover</strong> over a word (or tap it on a phone) to see its reading, dictionary form and meaning.</li>
+      <li><strong>Click</strong> a word to open it in the dictionaries you tick at the top of the page; each dictionary keeps its own tab.</li>
+      <li><strong>Listen</strong> with the audio player above the text; the recording reads the whole text at a slightly slowed pace.</li>
+      <li>Pages work offline once loaded, follow the system <strong>dark mode</strong>, and need no plug-ins.</li>
+    </ul>
+  </div>
+
+  <h2>Chinese <span class="native">中文</span> <span class="scheme">· characters coloured by tone</span></h2>
+  <div class="grid">
+    <a class="card" href="Chinese/wo_de_yi_tian.html">
+      <span class="level">A2 · HSK 2–3</span>
+      <p class="title cjk" lang="zh-Hans">我的一天</p>
+      <p class="reading">Wǒ de yītiān · My Day</p>
+      <p class="topic">An everyday routine: waking up, the subway commute, lunch with a colleague, errands and the evening at home.</p>
+      <p class="meta"><span>≈ 300 characters</span><span>audio 1:24</span><span>MDBG, Arch Chinese, LEO, Tatoeba</span></p>
+      <span class="open">Open reader →</span>
+    </a>
+    <a class="card" href="Chinese/zi_wo_jie_shao.html">
+      <span class="level">A2 · HSK 2–3</span>
+      <p class="title cjk" lang="zh-Hans">自我介绍</p>
+      <p class="reading">Zìwǒ jièshào · Self-introduction</p>
+      <p class="topic">Introducing yourself: name, home town, work, family and the languages you speak.</p>
+      <p class="meta"><span>≈ 330 characters</span><span>audio 1:19</span><span>MDBG, Arch Chinese, LEO, Tatoeba</span></p>
+      <span class="open">Open reader →</span>
+    </a>
+  </div>
+
+  <h2>Japanese <span class="native">日本語</span> <span class="scheme">· words coloured by part of speech</span></h2>
+  <div class="grid">
+    <a class="card" href="Japanese/watashi_no_ichinichi.html">
+      <span class="level">A2 · JLPT N4</span>
+      <p class="title cjk" lang="ja">私の一日</p>
+      <p class="reading">Watashi no ichinichi · My Day</p>
+      <p class="topic">The same everyday routine as the Chinese text, in Japanese: morning, commute, lunch, errands. Tooltips give the kana reading and romaji.</p>
+      <p class="meta"><span>≈ 430 characters</span><span>audio 1:55</span><span>Jisho, Weblio, Tatoeba</span></p>
+      <span class="open">Open reader →</span>
+    </a>
+  </div>
+
+  <h2>German <span class="native">Deutsch</span> <span class="scheme">· nouns coloured by gender <span class="palette"><i style="background:var(--c-m)"></i><i style="background:var(--c-f)"></i><i style="background:var(--c-n)"></i><i style="background:var(--c-v)"></i></span></span></h2>
+  <div class="grid">
+    <a class="card" href="German/die_punischen_kriege.html">
+      <span class="level">B2</span>
+      <p class="title" lang="de">Die Punischen Kriege</p>
+      <p class="reading">The Punic Wars, 264–146 BC</p>
+      <p class="topic">An expository text on the three wars between Rome and Carthage: the Roman fleet, Hannibal's crossing of the Alps and Cannae, Scipio and Zama, Cato and the fall of Carthage. Tooltips carry a grammar note per form.</p>
+      <p class="meta"><span>≈ 390 words</span><span>audio 3:11</span><span>dict.cc, LEO, DWDS, Wiktionary, Tatoeba</span></p>
+      <span class="open">Open reader →</span>
+    </a>
+  </div>
+
+  <h2>Spanish <span class="native">Español</span> <span class="scheme">· nouns by gender, subjunctive verbs highlighted</span></h2>
+  <div class="grid">
+    <a class="card" href="Spanish/la_reconquista.html">
+      <span class="level">B2</span>
+      <p class="title" lang="es">La Reconquista</p>
+      <p class="reading">The Reconquista, 711–1492</p>
+      <p class="topic">A historical text on the Christian kingdoms and al-Andalus, from the Muslim conquest to the fall of Granada, with the subjunctive forms set apart.</p>
+      <p class="meta"><span>≈ 420 words</span><span>audio 2:47</span><span>WordReference, RAE, LEO, Tatoeba</span></p>
+      <span class="open">Open reader →</span>
+    </a>
+  </div>
+
+  <footer>
+    Each reader is a single self-contained HTML file with its mp3 recording next to it. Levels follow the CEFR scale. Recordings were synthesised with Microsoft neural voices (edge-tts).
+  </footer>
+</div>
+</body>
+</html>

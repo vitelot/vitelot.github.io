@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Reconquista · B2 Reader</title>
+<meta name="description" content="An interactive B2-level Spanish reading text on the Reconquista, with nouns coloured by gender and subjunctive verbs highlighted, hover/tap tooltips showing the dictionary form, grammatical notes and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-head: #ffd166;
+    --tip-note: #c9d1d9;
+    --c-m: #2980B9;   /* masculine noun phrase: blue  */
+    --c-f: #E74C3C;   /* feminine noun phrase: red    */
+    --c-s: #27AE60;   /* verb in the subjunctive: green */
+    --c-v: #B7950B;   /* verb (indicative, infinitive, participle): amber */
+    --c-o: #7F8C8D;   /* other (prepositions, conjunctions, adverbs, pronouns, numbers): grey */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-head: #9a6b00;
+      --tip-note: #4b5563;
+      --c-m: #5DADE2;
+      --c-f: #FF6B5B;
+      --c-s: #2ECC71;
+      --c-v: #F1C40F;
+      --c-o: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-head: #9a6b00;
+    --tip-note: #4b5563;
+    --c-m: #5DADE2;
+    --c-f: #FF6B5B;
+    --c-s: #2ECC71;
+    --c-v: #F1C40F;
+    --c-o: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    min-width: 22px; height: 22px;
+    padding: 0 7px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--c-f) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 21px;
+    line-height: 1.95;
+    margin: 0 0 1.1em;
+    text-align: left;
+    hyphens: manual;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .c-m { color: var(--c-m); }
+  .c-f { color: var(--c-f); }
+  .c-s { color: var(--c-s); }
+  .c-v { color: var(--c-v); }
+  .c-o { color: var(--c-o); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .head {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tip-head);
+    letter-spacing: 0.01em;
+  }
+  #tip .note {
+    font-size: 13px;
+    color: var(--tip-note);
+    font-style: italic;
+  }
+  #tip .en { margin-top: 3px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 19px; line-height: 1.9; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Spanish reader · CEFR B2 · Medieval history</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its dictionary form, a grammar note and its meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Word colour key">
+    <span class="label">Word colours</span>
+    <span class="key"><span class="swatch" style="background:var(--c-m)">el</span>masculine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-f)">la</span>feminine</span>
+    <span class="key"><span class="swatch" style="background:var(--c-v)">verbo</span>verb</span>
+    <span class="key"><span class="swatch" style="background:var(--c-s)">subj.</span>verb in the subjunctive</span>
+    <span class="key"><span class="swatch" style="background:var(--c-o)">…</span>other</span>
+    <span class="hint">Nouns carry the colour of their grammatical gender, and so do the articles, determiners and adjectives that agree with them. Verbs are amber (a pronominal verb such as se dividió is one word); verbs in the subjunctive are green; everything else is grey. Two-part expressions (no … sino, más … que) are linked: hovering one part highlights both. On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its dictionary form (infinitive, nominative singular) in one tab per selected dictionary. Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="lareconquista.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 420 words · the Reconquista, 711–1492 · dictionaries: WordReference, RAE, LEO, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="head"></div>
+  <div class="note"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [surface, head, note, english, colour, link?]
+     surface  the word (or fixed phrase) as written in the text
+     head     dictionary form: nouns with their article (el reino), verbs as
+              infinitive (dividirse), adjectives in the masc. sg. (pequeño),
+              contractions resolved (del (de + el)); it is also what the
+              click-to-search looks up (leading article and parenthesis stripped)
+     note     grammatical information about this form (case, tense, declension…)
+     english  meaning in the context of the sentence
+     colour   one letter: m/f gender of the noun phrase, v verb, s verb in the
+              subjunctive, o other
+     link     optional id shared by the parts of one discontinuous expression,
+              e.g. no … sino, no solo … sino también, más … que.
+              Linked parts highlight together and show the same tooltip.
+   Punctuation token: a plain string (no tooltip, neutral colour). A space is
+   inserted before every word token unless it is first in the paragraph or the
+   previous token is a string ending in "(", "„", "«" or whitespace; strings are
+   rendered verbatim, so opening brackets/quotes carry their own leading space.
+*/
+const TITLE = "La Reconquista";
+/*DATA-START*/
+const DATA = [
+  [
+    ["En","en","preposition","in","o"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["año","el año","noun, masc. sg.","year","m"],
+    ["711","711","year; read: setecientos once","711","o"],
+    ",",
+    ["un","un","indefinite article, masc. sg.","a","m"],
+    ["ejército","el ejército","noun, masc. sg.","army","m"],
+    ["musulmán","musulmán","adjective, masc. sg. (fem. musulmana, pl. musulmanes)","Muslim","m"],
+    ["procedente","procedente","adjective (present participle of proceder); procedente de = coming from","coming","m"],
+    ["del","del (de + el)","contraction de + el","from the","m"],
+    ["norte","el norte","noun, masc. sg.","north","m"],
+    ["de","de","preposition","of","o"],
+    ["África","África","proper noun, fem. (takes el in the singular because it begins with a stressed a)","Africa","f"],
+    ["cruzó","cruzar","pretérito indefinido, 3rd sg.; regular, spelling change z > c before e (crucé)","crossed","v"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["estrecho","el estrecho","noun, masc. sg. (also an adjective: narrow)","strait","m"],
+    ["de","de","preposition","of","o"],
+    ["Gibraltar","Gibraltar","proper noun","Gibraltar","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["derrotó","derrotar","pretérito indefinido, 3rd sg.","defeated","v"],
+    ["al","al (a + el)","contraction a + el; the personal a before a human direct object","the","m"],
+    ["rey","el rey","noun, masc. sg. (pl. reyes)","king","m"],
+    ["visigodo","visigodo","adjective, masc. sg.","Visigothic","m"],
+    ["don Rodrigo","don Rodrigo","proper noun; don = respectful title before a first name","Roderic (the last Visigothic king)","m"],
+    ["en","en","preposition","in","o"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["batalla","la batalla","noun, fem. sg.","battle","f"],
+    ["de","de","preposition","of","o"],
+    ["Guadalete","Guadalete","proper noun (river in Andalusia)","Guadalete","m"],
+    ".",
+    ["En","en","preposition (time)","within","o"],
+    ["pocos","poco","indefinite adjective, masc. pl.","a few","m"],
+    ["años","el año","noun, masc. pl.","years","m"],
+    ",",
+    ["casi","casi","adverb","almost","o"],
+    ["toda","todo","indefinite adjective, fem. sg.; toda la = the whole","all (of)","f"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["península","la península","noun, fem. sg.","peninsula","f"],
+    ["ibérica","ibérico","adjective, fem. sg.","Iberian","f"],
+    ["quedó","quedar","pretérito indefinido, 3rd sg.; quedar bajo = to come / be left under","came (under)","v"],
+    ["bajo","bajo","preposition","under","o"],
+    ["dominio","el dominio","noun, masc. sg.","rule; control","m"],
+    ["musulmán","musulmán","adjective, masc. sg.","Muslim","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["recibió","recibir","pretérito indefinido, 3rd sg.","received","v"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["nombre","el nombre","noun, masc. sg.","name","m"],
+    ["de","de","preposition","of","o"],
+    ["al-Ándalus","al-Ándalus","proper noun, masc.; the Arabic name of Muslim Iberia","al-Andalus","m"],
+    ".",
+    ["Sin embargo","sin embargo","adverbial phrase (adversative)","however","o"],
+    ",",
+    ["en","en","preposition","in","o"],
+    ["las","la","definite article, fem. pl.","the","f"],
+    ["montañas","la montaña","noun, fem. pl.","mountains","f"],
+    ["del","del (de + el)","contraction de + el","of the","m"],
+    ["norte","el norte","noun, masc. sg.","north","m"],
+    ["sobrevivieron","sobrevivir","pretérito indefinido, 3rd pl.; the subject (núcleos) follows the verb","survived","v"],
+    ["algunos","alguno","indefinite adjective, masc. pl. (algún before a masc. sg. noun)","some","m"],
+    ["pequeños","pequeño","adjective, masc. pl.","small","m"],
+    ["núcleos","el núcleo","noun, masc. pl.","enclaves; centres","m"],
+    ["cristianos","cristiano","adjective, masc. pl.","Christian","m"],
+    ".",
+    ["Según","según","preposition","according to","o"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["tradición","la tradición","noun, fem. sg. (nouns in -ción are feminine; pl. tradiciones, no accent)","tradition","f"],
+    ",",
+    ["hacia","hacia","preposition (approximate time)","around","o"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["año","el año","noun, masc. sg.","year","m"],
+    ["722","722","year; read: setecientos veintidós","722","o"],
+    ["un","un","indefinite article, masc. sg.","a","m"],
+    ["noble","el noble","noun, masc. sg. (also an adjective)","nobleman","m"],
+    ["llamado","llamar","past participle used as an adjective, masc. sg.","called","m"],
+    ["Pelayo","Pelayo","proper noun","Pelayo (Pelagius)","m"],
+    ["venció","vencer","pretérito indefinido, 3rd sg.; spelling change c > z before o/a (venzo)","defeated","v"],
+    ["a","a","the personal a before a direct object referring to people","(defeated)","o"],
+    ["una","una","indefinite article, fem. sg.","a","f"],
+    ["tropa","la tropa","noun, fem. sg.","troop; force","f"],
+    ["musulmana","musulmán","adjective, fem. sg.","Muslim","f"],
+    ["en","en","preposition","at","o"],
+    ["Covadonga","Covadonga","proper noun (Asturias)","Covadonga","f"],
+    ",",
+    ["un","un","indefinite article, masc. sg.","an","m"],
+    ["hecho","el hecho","noun, masc. sg. (also the past participle of hacer)","event; fact","m"],
+    ["que","que","relative pronoun (direct object)","which","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["cronistas","el cronista","noun, masc. pl. (nouns in -ista have one form: el/la cronista)","chroniclers","m"],
+    ["posteriores","posterior","adjective, pl. (same form for both genders)","later","m"],
+    ["presentaron","presentar","pretérito indefinido, 3rd pl.","presented","v"],
+    ["como","como","comparative conjunction / preposition","as","o"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["comienzo","el comienzo","noun, masc. sg.","beginning","m"],
+    ["de","de","preposition","of","o"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["Reconquista","la Reconquista","noun, fem. sg.; capitalised as the name of a historical period","Reconquista","f"],
+    "."
+  ],
+  [
+    ["Conviene","convenir","present, 3rd sg.; impersonal verb: conviene + infinitive = it is advisable / worth","it is worth","v"],
+    ["aclarar","aclarar","infinitive","clarifying","v"],
+    ["que","que","conjunction introducing a noun clause","that","o"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["Reconquista","la Reconquista","noun, fem. sg.","Reconquista","f"],
+    ["no","no","negation; first part of no … sino = not … but (rather)","not","o","ns1"],
+    ["fue","ser","pretérito indefinido, 3rd sg. (irregular: fui, fuiste, fue, fuimos, fuisteis, fueron; same forms as ir)","was","v"],
+    ["una","una","indefinite article, fem. sg.","a","f"],
+    ["guerra","la guerra","noun, fem. sg.","war","f"],
+    ["continua","continuo","adjective, fem. sg. (not the verb form continúa)","continuous","f"],
+    ",",
+    ["sino","sino","adversative conjunction after a negation; second part of no … sino","but (rather)","o","ns1"],
+    ["un","un","indefinite article, masc. sg.","a","m"],
+    ["proceso","el proceso","noun, masc. sg.","process","m"],
+    ["que","que","relative pronoun (subject)","which","o"],
+    ["duró","durar","pretérito indefinido, 3rd sg.","lasted","v"],
+    ["casi","casi","adverb","almost","o"],
+    ["ocho","ocho","cardinal number","eight","o"],
+    ["siglos","el siglo","noun, masc. pl.","centuries","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["en el que","el que","compound relative: en + el que (= en el cual), refers to proceso","in which","o"],
+    ["se alternaron","alternarse","pretérito indefinido, 3rd pl.; pronominal verb (se + verb); the subjects follow","alternated","v"],
+    ["períodos","el período","noun, masc. pl. (also spelt periodo)","periods","m"],
+    ["de","de","preposition","of","o"],
+    ["lucha","la lucha","noun, fem. sg.","fighting","f"],
+    ",",
+    ["treguas","la tregua","noun, fem. pl.","truces","f"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["alianzas","la alianza","noun, fem. pl.","alliances","f"],
+    ".",
+    ["Los","el","definite article, masc. pl.","the","m"],
+    ["reinos","el reino","noun, masc. pl.","kingdoms","m"],
+    ["cristianos","cristiano","adjective, masc. pl.","Christian","m"],
+    " (",
+    ["Asturias","Asturias","proper noun","Asturias","f"],
+    ",",
+    ["León","León","proper noun (kingdom and city)","León","m"],
+    ",",
+    ["Castilla","Castilla","proper noun","Castile","f"],
+    ",",
+    ["Navarra","Navarra","proper noun","Navarre","f"],
+    ",",
+    ["Aragón","Aragón","proper noun","Aragon","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["Portugal","Portugal","proper noun","Portugal","m"],
+    ")",
+    ["no solo","no solo","first part of no solo … sino también = not only … but also (the RAE now writes solo without accent)","not only","o","ns2"],
+    ["combatieron","combatir","pretérito indefinido, 3rd pl.","fought","v"],
+    ["contra","contra","preposition","against","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["musulmanes","el musulmán","noun, masc. pl. (sg. musulmán loses its accent in the plural)","Muslims","m"],
+    ",",
+    ["sino también","sino también","second part of no solo … sino también","but also","o","ns2"],
+    ["entre sí","entre sí","fixed phrase; sí = stressed reflexive pronoun, 3rd person","among themselves","o"],
+    ".",
+    ["Además","además","adverb","moreover","o"],
+    ",",
+    ["durante","durante","preposition","for","o"],
+    ["mucho","mucho","indefinite adjective, masc. sg.","a long","m"],
+    ["tiempo","el tiempo","noun, masc. sg.","time","m"],
+    ["al-Ándalus","al-Ándalus","proper noun, masc.","al-Andalus","m"],
+    ["fue","ser","pretérito indefinido, 3rd sg.","was","v"],
+    ["más","más","adverb; first part of the comparison más … que = more … than","more","o","cmp1"],
+    ["rico","rico","adjective, masc. sg.","rich","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["más","más","adverb; the comparison continues (más … y más … que)","more","o","cmp1"],
+    ["avanzado","avanzado","adjective (past participle of avanzar), masc. sg.","advanced","m"],
+    ["culturalmente","culturalmente","adverb in -mente (from cultural)","culturally","o"],
+    ["que","que","second part of the comparison más … que","than","o","cmp1"],
+    ["sus","su","possessive adjective, pl.","its","m"],
+    ["vecinos","el vecino","noun, masc. pl.","neighbours","m"],
+    ["del","del (de + el)","contraction de + el","of the","m"],
+    ["norte","el norte","noun, masc. sg.","north","m"],
+    ":",
+    ["en","en","preposition","in","o"],
+    ["ciudades","la ciudad","noun, fem. pl. (sg. ciudad)","cities","f"],
+    ["como","como","preposition introducing an example","such as","o"],
+    ["Córdoba","Córdoba","proper noun","Córdoba","f"],
+    ["florecieron","florecer","pretérito indefinido, 3rd pl.; the subjects (la ciencia, …) follow the verb","flourished","v"],
+    ["la","la","definite article, fem. sg.","(the)","f"],
+    ["ciencia","la ciencia","noun, fem. sg.","science","f"],
+    ",",
+    ["la","la","definite article, fem. sg.","(the)","f"],
+    ["filosofía","la filosofía","noun, fem. sg.","philosophy","f"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["la","la","definite article, fem. sg.","(the)","f"],
+    ["poesía","la poesía","noun, fem. sg.","poetry","f"],
+    ",",
+    ["y","y","coordinating conjunction","and","o"],
+    ["muchos","mucho","indefinite adjective, masc. pl.","many","m"],
+    ["textos","el texto","noun, masc. pl.","texts","m"],
+    ["griegos","griego","adjective, masc. pl.","Greek","m"],
+    ["llegaron","llegar","pretérito indefinido, 3rd pl.; spelling change g > gu before e (llegué)","reached","v"],
+    ["a","a","preposition of direction (after llegar)","(reached)","o"],
+    ["Europa","Europa","proper noun","Europe","f"],
+    ["gracias a","gracias a","prepositional phrase","thanks to","o"],
+    ["las","la","definite article, fem. pl.","the","f"],
+    ["traducciones","la traducción","noun, fem. pl.","translations","f"],
+    ["realizadas","realizar","past participle used as an adjective, fem. pl. (agrees with traducciones)","made","f"],
+    ["en","en","preposition","in","o"],
+    ["Toledo","Toledo","proper noun; the Toledo School of Translators (12th–13th c.)","Toledo","m"],
+    "."
+  ],
+  [
+    ["A partir del","a partir de","prepositional phrase + contraction de + el","from … onwards","o"],
+    ["siglo","el siglo","noun, masc. sg.","century","m"],
+    ["XI","XI","Roman numeral; read: once (from the 11th century on, Spanish uses cardinals: siglo once)","11th","o"],
+    ",",
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["situación","la situación","noun, fem. sg.","situation","f"],
+    ["cambió","cambiar","pretérito indefinido, 3rd sg.","changed","v"],
+    ".",
+    ["El","el","definite article, masc. sg.","the","m"],
+    ["califato","el califato","noun, masc. sg.","caliphate","m"],
+    ["de","de","preposition","of","o"],
+    ["Córdoba","Córdoba","proper noun","Córdoba","f"],
+    ["se dividió","dividirse","pretérito indefinido, 3rd sg.; pronominal verb (se + verb)","split up","v"],
+    ["en","en","preposition","into","o"],
+    ["numerosos","numeroso","adjective, masc. pl.","numerous","m"],
+    ["reinos","el reino","noun, masc. pl.","kingdoms","m"],
+    ["pequeños","pequeño","adjective, masc. pl. (after the noun: descriptive)","small","m"],
+    ",",
+    ["llamados","llamar","past participle used as an adjective, masc. pl.","called","m"],
+    ["taifas","la taifa","noun, fem. pl.; from Arabic ṭā'ifa = faction","taifas (petty kingdoms)","f"],
+    ",",
+    ["que","que","relative pronoun (subject)","which","o"],
+    ["se vieron obligados","verse obligado","pretérito indefinido, 3rd pl.; verse + participle = to find oneself (forced); obligados agrees with reinos","found themselves forced","v"],
+    ["a","a","preposition required by obligado a + infinitive","to","o"],
+    ["pagar","pagar","infinitive","pay","v"],
+    ["tributos","el tributo","noun, masc. pl.","tribute(s)","m"],
+    ["a","a","preposition (indirect object)","to","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["reyes","el rey","noun, masc. pl. (sg. rey: -y + -es)","kings","m"],
+    ["cristianos","cristiano","adjective, masc. pl.","Christian","m"],
+    ["para que","para que","final conjunction, always followed by the subjunctive","so that","o"],
+    ["no","no","negation","not","o"],
+    ["los","lo","direct-object pronoun, masc. pl. (= los reinos), placed before the conjugated verb","them","o"],
+    ["atacaran","atacar","pretérito imperfecto de subjuntivo, 3rd pl. (atacaran or atacasen), required by para que","would attack","s"],
+    ".",
+    ["En","en","preposition","in","o"],
+    ["1085","1085","year; read: mil ochenta y cinco","1085","o"],
+    ",",
+    ["Alfonso VI","Alfonso VI","proper noun; VI is read sexto (ordinals are used up to X)","Alfonso VI","m"],
+    ["de","de","preposition","of","o"],
+    ["Castilla","Castilla","proper noun","Castile","f"],
+    ["conquistó","conquistar","pretérito indefinido, 3rd sg.","conquered","v"],
+    ["Toledo","Toledo","proper noun","Toledo","m"],
+    ",",
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["antigua","antiguo","adjective, fem. sg.; before the noun = former, after the noun = ancient","former","f"],
+    ["capital","la capital","noun, fem. sg. (el capital = money, capital)","capital","f"],
+    ["visigoda","visigodo","adjective, fem. sg.","Visigothic","f"],
+    ".",
+    ["Aunque","aunque","concessive conjunction (+ indicative here: a real fact)","although","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["almorávides","el almorávide","noun, masc. pl.; Berber dynasty (11th–12th c.)","Almoravids","m"],
+    ["y","y","coordinating conjunction","and","o"],
+    ",",
+    ["más tarde","más tarde","adverbial phrase","later","o"],
+    ",",
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["almohades","el almohade","noun, masc. pl.; Berber dynasty (12th–13th c.)","Almohads","m"],
+    ["llegaron","llegar","pretérito indefinido, 3rd pl.","came","v"],
+    ["desde","desde","preposition (origin)","from","o"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["norte","el norte","noun, masc. sg.","north","m"],
+    ["de","de","preposition","of","o"],
+    ["África","África","proper noun, fem.","Africa","f"],
+    ["para","para","preposition of purpose + infinitive","(in order) to","o"],
+    ["frenar","frenar","infinitive","halt","v"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["avance","el avance","noun, masc. sg.","advance","m"],
+    ["cristiano","cristiano","adjective, masc. sg.","Christian","m"],
+    ",",
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["victoria","la victoria","noun, fem. sg.","victory","f"],
+    ["de","de","preposition","of","o"],
+    ["Las Navas de Tolosa","Las Navas de Tolosa","proper noun (Jaén); battle of 1212","Las Navas de Tolosa","f"],
+    ["en","en","preposition","in","o"],
+    ["1212","1212","year; read: mil doscientos doce","1212","o"],
+    ["fue","ser","pretérito indefinido, 3rd sg.","was","v"],
+    ["decisiva","decisivo","adjective, fem. sg.","decisive","f"],
+    ":",
+    ["en","en","preposition","in","o"],
+    ["las","la","definite article, fem. pl.","the","f"],
+    ["décadas","la década","noun, fem. pl.","decades","f"],
+    ["siguientes","siguiente","adjective, pl. (same form for both genders)","following","f"],
+    ["cayeron","caer","pretérito indefinido, 3rd pl. (irregular: cayó, cayeron); the subjects follow the verb","fell","v"],
+    ["Córdoba","Córdoba","proper noun","Córdoba","f"],
+    ",",
+    ["Valencia","Valencia","proper noun","Valencia","f"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["Sevilla","Sevilla","proper noun","Seville","f"],
+    "."
+  ],
+  [
+    ["El","el","definite article, masc. sg.","the","m"],
+    ["último","último","adjective, masc. sg.","last","m"],
+    ["reino","el reino","noun, masc. sg.","kingdom","m"],
+    ["musulmán","musulmán","adjective, masc. sg.","Muslim","m"],
+    ["de","de","preposition","of","o"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["península","la península","noun, fem. sg.","peninsula","f"],
+    ",",
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["reino","el reino","noun, masc. sg. (in apposition)","kingdom","m"],
+    ["nazarí","nazarí","adjective, same form for both genders (pl. nazaríes); of the Nasrid dynasty","Nasrid","m"],
+    ["de","de","preposition","of","o"],
+    ["Granada","Granada","proper noun","Granada","f"],
+    ",",
+    ["resistió","resistir","pretérito indefinido, 3rd sg.","held out","v"],
+    ["más de","más de","comparative before a quantity: más de + number","more than","o"],
+    ["dos","dos","cardinal number","two","o"],
+    ["siglos","el siglo","noun, masc. pl.","centuries","m"],
+    ["gracias a","gracias a","prepositional phrase","thanks to","o"],
+    ["su","su","possessive adjective, sg.","its","f"],
+    ["posición","la posición","noun, fem. sg.","position","f"],
+    ["montañosa","montañoso","adjective, fem. sg.","mountainous","f"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["a","a","preposition (repeats the a of gracias a)","to","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["tributos","el tributo","noun, masc. pl.","tribute(s)","m"],
+    ["que","que","relative pronoun (direct object)","which","o"],
+    ["pagaba","pagar","pretérito imperfecto, 3rd sg. (habitual action in the past)","it paid","v"],
+    ["a","a","preposition (indirect object)","to","o"],
+    ["Castilla","Castilla","proper noun","Castile","f"],
+    ".",
+    ["Finalmente","finalmente","adverb","finally","o"],
+    ",",
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["Reyes Católicos","los Reyes Católicos","proper noun, masc. pl.; the title of Isabella and Ferdinand","Catholic Monarchs","m"],
+    ",",
+    ["Isabel","Isabel","proper noun","Isabella","f"],
+    ["de","de","preposition","of","o"],
+    ["Castilla","Castilla","proper noun","Castile","f"],
+    ["y","y","coordinating conjunction","and","o"],
+    ["Fernando","Fernando","proper noun","Ferdinand","m"],
+    ["de","de","preposition","of","o"],
+    ["Aragón","Aragón","proper noun","Aragon","m"],
+    ",",
+    ["lo","lo","direct-object pronoun, masc. sg. (= el reino de Granada), before the conjugated verb","it","o"],
+    ["conquistaron","conquistar","pretérito indefinido, 3rd pl.","conquered","v"],
+    ["el","el","definite article before a date: el 2 de enero = on 2 January","on","m"],
+    ["2 de enero","el 2 de enero","date; read: dos de enero (cardinal numbers for days, except primero)","2 January","m"],
+    ["de","de","preposition","(of)","o"],
+    ["1492","1492","year; read: mil cuatrocientos noventa y dos","1492","o"],
+    ",",
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["mismo","mismo","adjective, masc. sg.","same","m"],
+    ["año","el año","noun, masc. sg.","year","m"],
+    ["en que","en que","relative: en (el) que, refers to año","in which","o"],
+    ["Colón","Colón","proper noun","Columbus","m"],
+    ["llegó","llegar","pretérito indefinido, 3rd sg.","reached","v"],
+    ["a","a","preposition of direction (after llegar)","(reached)","o"],
+    ["América","América","proper noun","America","f"],
+    ".",
+    ["Aunque","aunque","concessive conjunction (+ indicative: a real fact)","although","o"],
+    ["las","la","definite article, fem. pl.","the","f"],
+    ["capitulaciones","la capitulación","noun, fem. pl.; the terms of a surrender","surrender terms","f"],
+    ["garantizaban","garantizar","pretérito imperfecto, 3rd pl.","guaranteed","v"],
+    ["a","a","preposition (indirect object)","to","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["musulmanes","el musulmán","noun, masc. pl.","Muslims","m"],
+    ["que","que","conjunction introducing a noun clause with the subjunctive (after a verb of influence / promise)","that","o"],
+    ["pudieran","poder","pretérito imperfecto de subjuntivo, 3rd pl. (irregular stem pud-); subjunctive after garantizar que in the past","could","s"],
+    ["conservar","conservar","infinitive","keep","v"],
+    ["su","su","possessive adjective, sg.","their","f"],
+    ["religión","la religión","noun, fem. sg.","religion","f"],
+    ",",
+    ["pocos","poco","indefinite adjective, masc. pl.","a few","m"],
+    ["años","el año","noun, masc. pl.","years","m"],
+    ["después","después","adverb","later","o"],
+    ["fueron obligados","obligar","passive voice, pretérito indefinido: ser + past participle agreeing with the subject (masc. pl.)","were forced","v"],
+    ["a","a","preposition required by obligar a + infinitive","to","o"],
+    ["convertirse","convertirse","pronominal infinitive (enclitic -se); here: to convert to Christianity","convert","v"],
+    ["o","o","disjunctive conjunction","or","o"],
+    ["a","a","preposition (repeats obligados a)","to","o"],
+    ["marcharse","marcharse","pronominal infinitive (enclitic -se)","leave","v"],
+    ",",
+    ["y","y","coordinating conjunction","and","o"],
+    ["en","en","preposition","in","o"],
+    ["1609","1609","year; read: mil seiscientos nueve","1609","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["moriscos","el morisco","noun, masc. pl.; Muslims converted to Christianity and their descendants","Moriscos","m"],
+    ["fueron expulsados","expulsar","passive voice, pretérito indefinido: ser + past participle (masc. pl.)","were expelled","v"],
+    ["definitivamente","definitivamente","adverb in -mente","for good","o"],
+    ".",
+    ["Hoy en día","hoy en día","adverbial phrase","nowadays","o"],
+    ",",
+    ["muchos","mucho","indefinite adjective, masc. pl.","many","m"],
+    ["historiadores","el historiador","noun, masc. pl.","historians","m"],
+    ["prefieren","preferir","present, 3rd pl. (stem change e > ie)","prefer","v"],
+    ["hablar","hablar","infinitive; hablar de = to speak of","to speak","v"],
+    ["de","de","preposition (after hablar)","of","o"],
+    " «",
+    ["conquista","la conquista","noun, fem. sg.","conquest","f"],
+    "»",
+    ["o","o","disjunctive conjunction","or","o"],
+    ["de","de","preposition","of","o"],
+    " «",
+    ["expansión","la expansión","noun, fem. sg.","expansion","f"],
+    ["de","de","preposition","of","o"],
+    ["los","el","definite article, masc. pl.","the","m"],
+    ["reinos","el reino","noun, masc. pl.","kingdoms","m"],
+    ["cristianos","cristiano","adjective, masc. pl.","Christian","m"],
+    "»",
+    ",",
+    ["ya que","ya que","causal conjunction","since","o"],
+    ["consideran","considerar","present, 3rd pl.","they consider","v"],
+    ["que","que","conjunction introducing a noun clause","that","o"],
+    ["el","el","definite article, masc. sg.","the","m"],
+    ["término","el término","noun, masc. sg.","term","m"],
+    ["Reconquista","la Reconquista","noun, fem. sg. (in apposition to término)","Reconquista","f"],
+    ["refleja","reflejar","present, 3rd sg.","reflects","v"],
+    ["más","más","adverb; first part of the comparison más … que","more","o","cmp2"],
+    ["una","una","indefinite article, fem. sg.","an","f"],
+    ["idea","la idea","noun, fem. sg.","idea","f"],
+    ["del","del (de + el)","contraction de + el","of the","m"],
+    ["siglo","el siglo","noun, masc. sg.","century","m"],
+    ["XIX","XIX","Roman numeral; read: diecinueve","19th","o"],
+    ["que","que","second part of the comparison más … que","than","o","cmp2"],
+    ["la","la","definite article, fem. sg.","the","f"],
+    ["realidad","la realidad","noun, fem. sg.","reality","f"],
+    ["medieval","medieval","adjective, same form for both genders","medieval","f"],
+    "."
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded dictionary form. The selection is
+   remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "wr-en",   name: "WordReference es–en", url: "https://www.wordreference.com/es/en/translation.asp?spen={q}" },
+  { id: "wr-it",   name: "WordReference es–it", url: "https://www.wordreference.com/esit/{q}" },
+  { id: "rae",     name: "RAE",                 url: "https://dle.rae.es/{q}" },
+  { id: "leo",     name: "LEO es–de",           url: "https://dict.leo.org/spanisch-deutsch/{q}" },
+  { id: "tatoeba", name: "Tatoeba",             url: "https://tatoeba.org/en/sentences/search?from=spa&to=eng&query={q}" }
+];
+const DICT_DEFAULT = ["wr-en"];             // ticked on first visit
+const DICT_STORAGE_KEY = "la_reconquista.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+  const COLOURS = new Set(["m", "f", "s", "v", "o"]);
+  const NO_SPACE_AFTER = /[(„«\s]$/;         // strings after which no space is inserted
+  const ARTICLE = /^(el|la|los|las|un|una)\s+/;
+  const PAREN = /\s*\(.*\)$/;               // "del (de + el)" -> "del"
+
+  DATA.forEach((paragraph, pi) => {
+    const p = document.createElement("p");
+    paragraph.forEach((tok, i) => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const prev = paragraph[i - 1];
+      if (i > 0 && !(typeof prev === "string" && NO_SPACE_AFTER.test(prev))) {
+        p.appendChild(document.createTextNode(" "));
+      }
+      const [surface, head, note, en, colour, link] = tok;
+      if (!COLOURS.has(colour)) {
+        console.warn("Unknown colour code:", surface, colour);
+      }
+      const w = document.createElement("span");
+      w.className = "w c-" + (COLOURS.has(colour) ? colour : "o");
+      w.tabIndex = 0;
+      w.dataset.surface = surface;
+      w.dataset.lookup = head.replace(PAREN, "").replace(ARTICLE, "");
+      w.dataset.head = head;
+      w.dataset.note = note;
+      w.dataset.en = en;
+      if (link) w.dataset.link = pi + ":" + link;   // link ids are scoped to the paragraph
+      w.setAttribute("aria-label", surface + ", " + head + ", " + en);
+      w.textContent = surface;
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipHead = tip.querySelector(".head");
+  const tipNote = tip.querySelector(".note");
+  const tipEn = tip.querySelector(".en");
+  const reader = document.getElementById("reader");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  // All parts of a discontinuous word (separable verb etc.), or just the element.
+  function partsOf(el) {
+    const id = el.dataset.link;
+    if (!id) return [el];
+    return Array.from(reader.querySelectorAll('.w[data-link="' + CSS.escape(id) + '"]'));
+  }
+  function samePart(a, b) {
+    return a === b || (a.dataset.link && a.dataset.link === b.dataset.link);
+  }
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = el;
+    partsOf(el).forEach(x => x.classList.add("active"));
+    tipHead.textContent = el.dataset.head;
+    tipNote.textContent = el.dataset.note;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) partsOf(current).forEach(x => x.classList.remove("active"));
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current && samePart(current, w)) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.lookup);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>
