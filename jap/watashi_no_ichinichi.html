@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>私の一日 · A2 Reader</title>
+<meta name="description" content="An interactive A2-level Japanese reading text with words coloured by part of speech, hover/tap tooltips showing the kana reading, romaji and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-reading: #ffd166;
+    --tip-romaji: #c9d1d9;
+    --c-n: #2980B9;   /* noun / pronoun / number: blue   */
+    --c-v: #E74C3C;   /* verb: red                        */
+    --c-a: #27AE60;   /* adjective: green                 */
+    --c-p: #B7950B;   /* particle: amber (darkened for light bg) */
+    --c-o: #7F8C8D;   /* other (adverb, conjunction, copula): grey */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-reading: #9a6b00;
+      --tip-romaji: #4b5563;
+      --c-n: #5DADE2;
+      --c-v: #FF6B5B;
+      --c-a: #2ECC71;
+      --c-p: #F1C40F;
+      --c-o: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-reading: #9a6b00;
+    --tip-romaji: #4b5563;
+    --c-n: #5DADE2;
+    --c-v: #FF6B5B;
+    --c-a: #2ECC71;
+    --c-p: #F1C40F;
+    --c-o: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo",
+                 "Noto Sans CJK JP", "Noto Sans JP", "Source Han Sans JP",
+                 -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--c-v) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 24px;
+    line-height: 2.3;
+    margin: 0 0 1.1em;
+    text-align: justify;
+    text-justify: inter-ideograph;
+    letter-spacing: 0.02em;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .pos-n { color: var(--c-n); }
+  .pos-v { color: var(--c-v); }
+  .pos-a { color: var(--c-a); }
+  .pos-p { color: var(--c-p); }
+  .pos-o { color: var(--c-o); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(340px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .reading {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--tip-reading);
+    letter-spacing: 0.02em;
+  }
+  #tip .romaji {
+    font-size: 14px;
+    color: var(--tip-romaji);
+    font-family: "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    letter-spacing: 0.01em;
+  }
+  #tip .en { margin-top: 2px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 22px; line-height: 2.2; text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Japanese reader · CEFR A2 / JLPT N4</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its reading and meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Word colour key">
+    <span class="label">Word colours</span>
+    <span class="key"><span class="swatch" style="background:var(--c-n)">名</span>noun</span>
+    <span class="key"><span class="swatch" style="background:var(--c-v)">動</span>verb</span>
+    <span class="key"><span class="swatch" style="background:var(--c-a)">形</span>adjective</span>
+    <span class="key"><span class="swatch" style="background:var(--c-p)">助</span>particle</span>
+    <span class="key"><span class="swatch" style="background:var(--c-o)">他</span>other</span>
+    <span class="hint">Each word is coloured by its part of speech (nouns include pronouns, numbers and counters; "other" covers adverbs, conjunctions and the copula です). On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its search in one tab per selected dictionary (conjugated verbs and adjectives are looked up in their dictionary form). Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="watashinoichinichi.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 430 characters · everyday routine: morning, commute, lunch, errands · dictionaries: Jisho, Weblio, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="reading"></div>
+  <div class="romaji"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [surface, kana, romaji, english, pos, lemma?]
+     surface  the word as written in the text
+     kana     its reading in hiragana (katakana words keep katakana)
+     romaji   Hepburn romanisation
+     english  meaning in the context of the sentence
+     pos      one letter: n noun/pronoun/number/counter, v verb, a adjective,
+              p particle, o other (adverb, conjunction, copula)
+     lemma    optional dictionary form, used for the click-to-search lookup
+              when the surface is conjugated (e.g. 鳴ります -> 鳴る)
+   Punctuation token: a plain string (no tooltip, neutral colour).
+*/
+const TITLE = "私の一日";
+/*DATA-START*/
+const DATA = [
+  [
+    ["毎朝","まいあさ","maiasa","every morning","n"],
+    ["七時","しちじ","shichiji","seven o'clock","n"],
+    ["に","に","ni","at (time particle)","p"],
+    ["目覚まし時計","めざましどけい","mezamashidokei","alarm clock","n"],
+    ["が","が","ga","(subject particle)","p"],
+    ["鳴ります","なります","narimasu","rings; goes off (polite present)","v","鳴る"],
+    "。",
+    ["起きたくない","おきたくない","okitakunai","don't want to get up (起きる + たい + ない)","v","起きる"],
+    ["です","です","desu","(polite copula)","o"],
+    ["が","が","ga","but (sentence-linking が)","p"],
+    "、",
+    ["今日","きょう","kyō","today","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["する","する","suru","to do","v"],
+    ["こと","こと","koto","thing(s); matter(s) (nominaliser)","n"],
+    ["が","が","ga","(subject particle)","p"],
+    ["たくさん","たくさん","takusan","a lot; many","o"],
+    ["あります","あります","arimasu","there is / are (inanimate)","v","ある"],
+    "。",
+    ["起きて","おきて","okite","get up (て-form)","v","起きる"],
+    ["から","から","kara","after (て-form + から = after doing …)","p"],
+    "、",
+    ["まず","まず","mazu","first (of all)","o"],
+    ["歯","は","ha","teeth","n"],
+    ["を","を","o","(object particle)","p"],
+    ["磨いて","みがいて","migaite","brush (て-form, links to the next action)","v","磨く"],
+    "、",
+    ["顔","かお","kao","face","n"],
+    ["を","を","o","(object particle)","p"],
+    ["洗って","あらって","aratte","wash (て-form)","v","洗う"],
+    "、",
+    ["それから","それから","sorekara","and then; after that","o"],
+    ["服","ふく","fuku","clothes","n"],
+    ["を","を","o","(object particle)","p"],
+    ["着ます","きます","kimasu","put on; wear (polite present)","v","着る"],
+    "。",
+    ["母","はは","haha","(my) mother","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["もう","もう","mō","already","o"],
+    ["朝ご飯","あさごはん","asagohan","breakfast","n"],
+    ["を","を","o","(object particle)","p"],
+    ["作ってくれました","つくってくれました","tsukutte kuremashita","made (for me) (作る + てくれる = do as a favour, past)","v","作る"],
+    "。",
+    ["おかゆ","おかゆ","okayu","rice porridge; congee","n"],
+    ["一杯","いっぱい","ippai","one bowl (counter 杯 for bowls / cups)","n"],
+    ["と","と","to","and","p"],
+    ["肉まん","にくまん","nikuman","steamed meat bun(s)","n"],
+    ["二つ","ふたつ","futatsu","two (generic counter つ)","n"],
+    ["です","です","desu","is; are (polite copula)","o"],
+    "。",
+    ["遅刻","ちこく","chikoku","being late; lateness","n"],
+    ["したくない","したくない","shitakunai","don't want to do (する + たい + ない)","v","する"],
+    ["ので","ので","node","because; so","p"],
+    "、",
+    ["速く","はやく","hayaku","quickly (adverbial form of 速い)","a","速い"],
+    ["食べます","たべます","tabemasu","eat (polite present)","v","食べる"],
+    "。"
+  ],
+  [
+    ["八時","はちじ","hachiji","eight o'clock","n"],
+    ["に","に","ni","at (time particle)","p"],
+    ["家","いえ","ie","house; home","n"],
+    ["を","を","o","(object particle: the place one leaves)","p"],
+    ["出ました","でました","demashita","left; went out (past)","v","出る"],
+    "。",
+    ["家","いえ","ie","(my) home","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["会社","かいしゃ","kaisha","company; office","n"],
+    ["から","から","kara","from","p"],
+    ["あまり","あまり","amari","not very (with a negative)","o"],
+    ["遠くない","とおくない","tōkunai","not far (negative of 遠い)","a","遠い"],
+    ["ので","ので","node","so; because","p"],
+    "、",
+    ["毎日","まいにち","mainichi","every day","n"],
+    ["地下鉄","ちかてつ","chikatetsu","subway; metro","n"],
+    ["で","で","de","by (means of transport)","p"],
+    ["会社","かいしゃ","kaisha","company; office","n"],
+    ["に","に","ni","to (destination)","p"],
+    ["行きます","いきます","ikimasu","go (polite present)","v","行く"],
+    "。",
+    ["駅","えき","eki","station","n"],
+    ["に","に","ni","in; at (place of existence)","p"],
+    ["は","は","wa","(topic / contrast particle)","p"],
+    ["人","ひと","hito","people; person","n"],
+    ["が","が","ga","(subject particle)","p"],
+    ["たくさん","たくさん","takusan","a lot; many","o"],
+    ["いて","いて","ite","there are (animate; て-form)","v","いる"],
+    "、",
+    ["みんな","みんな","minna","everyone","n"],
+    ["スマホ","スマホ","sumaho","smartphone (short for スマートフォン)","n"],
+    ["を","を","o","(object particle)","p"],
+    ["見ていました","みていました","mite imashita","were looking at (past progressive)","v","見る"],
+    "。",
+    ["私","わたし","watashi","I","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["立って","たって","tatte","standing (て-form: while standing)","v","立つ"],
+    ["音楽","おんがく","ongaku","music","n"],
+    ["を","を","o","(object particle)","p"],
+    ["聞きました","ききました","kikimashita","listened to (past)","v","聞く"],
+    "。",
+    ["二十分","にじゅっぷん","nijuppun","twenty minutes","n"],
+    ["で","で","de","in; within (time taken)","p"],
+    ["着きました","つきました","tsukimashita","arrived (past)","v","着く"],
+    "。",
+    ["駅","えき","eki","station","n"],
+    ["から","から","kara","from","p"],
+    ["会社","かいしゃ","kaisha","company; office","n"],
+    ["まで","まで","made","to; as far as","p"],
+    ["歩いて","あるいて","aruite","on foot; walking (て-form)","v","歩く"],
+    ["五分","ごふん","gofun","five minutes","n"],
+    ["だけ","だけ","dake","only","p"],
+    ["です","です","desu","is (polite copula)","o"],
+    "。"
+  ],
+  [
+    ["昼","ひる","hiru","noon; midday","n"],
+    ["の","の","no","(attributive / possessive particle)","p"],
+    ["十二時","じゅうにじ","jūniji","twelve o'clock","n"],
+    ["に","に","ni","at (time particle)","p"],
+    "、",
+    ["同僚","どうりょう","dōryō","colleague","n"],
+    ["と","と","to","with","p"],
+    ["一緒に","いっしょに","issho ni","together","o"],
+    ["近く","ちかく","chikaku","nearby; the vicinity","n"],
+    ["の","の","no","(attributive particle)","p"],
+    ["食堂","しょくどう","shokudō","(casual) restaurant; eatery","n"],
+    ["へ","へ","e","to (direction)","p"],
+    ["食べ","たべ","tabe","eat (verb stem)","v","食べる"],
+    ["に","に","ni","in order to (purpose, with 行く)","p"],
+    ["行きました","いきました","ikimashita","went (past)","v","行く"],
+    "。",
+    ["この","この","kono","this","o"],
+    ["食堂","しょくどう","shokudō","restaurant; eatery","n"],
+    ["に","に","ni","to (destination)","p"],
+    ["は","は","wa","(topic particle)","p"],
+    ["何度も","なんども","nando mo","many times","o"],
+    ["来た","きた","kita","came (plain past)","v","来る"],
+    ["こと","こと","koto","(experience: 〜たことがある = have done before)","n"],
+    ["が","が","ga","(subject particle)","p"],
+    ["あります","あります","arimasu","have (the experience of)","v","ある"],
+    "。",
+    ["料理","りょうり","ryōri","food; dishes; cooking","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["安くて","やすくて","yasukute","cheap and … (て-form of 安い)","a","安い"],
+    ["おいしい","おいしい","oishii","delicious","a"],
+    ["です","です","desu","is (polite copula)","o"],
+    "。",
+    ["私","わたし","watashi","I","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["牛肉麺","ぎゅうにくめん","gyūnikumen","beef noodles","n"],
+    ["を","を","o","(object particle)","p"],
+    ["一杯","いっぱい","ippai","one bowl","n"],
+    "、",
+    ["同僚","どうりょう","dōryō","colleague","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["餃子","ぎょうざ","gyōza","gyoza; dumplings","n"],
+    ["を","を","o","(object particle)","p"],
+    ["一皿","ひとさら","hitosara","one plate (counter 皿)","n"],
+    ["注文しました","ちゅうもんしました","chūmon shimashita","ordered (past)","v","注文する"],
+    "。",
+    ["店員","てんいん","ten'in","staff member; server","n"],
+    ["は","は","wa","(topic particle)","p"],
+    "「",
+    ["少々","しょうしょう","shōshō","a moment; a little (formal)","o"],
+    ["お待ちください","おまちください","omachi kudasai","please wait (polite request)","v","待つ"],
+    "。",
+    ["十分","じゅっぷん","juppun","ten minutes","n"],
+    ["で","で","de","in (time taken)","p"],
+    ["できます","できます","dekimasu","will be ready; can be done","v","できる"],
+    "」",
+    ["と","と","to","(quotation particle)","p"],
+    ["言いました","いいました","iimashita","said (past)","v","言う"],
+    "。",
+    ["私たち","わたしたち","watashitachi","we","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["食べながら","たべながら","tabenagara","while eating (〜ながら = while)","v","食べる"],
+    ["おしゃべり","おしゃべり","oshaberi","chatting; a chat","n"],
+    ["を","を","o","(object particle)","p"],
+    ["して","して","shite","do (て-form)","v","する"],
+    "、",
+    ["とても","とても","totemo","very","o"],
+    ["楽しかった","たのしかった","tanoshikatta","was fun; enjoyable (past of 楽しい)","a","楽しい"],
+    ["です","です","desu","(polite copula)","o"],
+    "。"
+  ],
+  [
+    ["仕事","しごと","shigoto","work; job","n"],
+    ["の","の","no","(attributive particle)","p"],
+    ["後","あと","ato","after","n"],
+    "、",
+    ["スーパー","スーパー","sūpā","supermarket","n"],
+    ["へ","へ","e","to (direction)","p"],
+    ["買い物","かいもの","kaimono","shopping","n"],
+    ["に","に","ni","(purpose, with 行く)","p"],
+    ["行きました","いきました","ikimashita","went (past)","v","行く"],
+    "。",
+    ["果物","くだもの","kudamono","fruit","n"],
+    ["と","と","to","and","p"],
+    ["卵","たまご","tamago","eggs","n"],
+    ["と","と","to","and","p"],
+    ["牛乳","ぎゅうにゅう","gyūnyū","milk","n"],
+    ["を","を","o","(object particle)","p"],
+    ["一本","いっぽん","ippon","one (bottle; counter 本 for long objects)","n"],
+    ["買いました","かいました","kaimashita","bought (past)","v","買う"],
+    "。",
+    ["帰る","かえる","kaeru","to go home; to return","v"],
+    ["途中","とちゅう","tochū","on the way","n"],
+    ["で","で","de","at; on (place of an action)","p"],
+    "、",
+    ["銀行","ぎんこう","ginkō","bank","n"],
+    ["で","で","de","at (place of an action)","p"],
+    ["お金","おかね","okane","money","n"],
+    ["も","も","mo","also; too","p"],
+    ["下ろしました","おろしました","oroshimashita","withdrew (money) (past)","v","下ろす"],
+    "。",
+    ["夜","よる","yoru","night; evening","n"],
+    ["八時","はちじ","hachiji","eight o'clock","n"],
+    ["に","に","ni","at (time particle)","p"],
+    ["家","いえ","ie","home","n"],
+    ["に","に","ni","to; at (arrival point)","p"],
+    ["着きました","つきました","tsukimashita","arrived (past)","v","着く"],
+    "。",
+    ["少し","すこし","sukoshi","a little","o"],
+    ["疲れました","つかれました","tsukaremashita","got tired; am tired (past)","v","疲れる"],
+    ["が","が","ga","but (sentence-linking が)","p"],
+    "、",
+    ["今日","きょう","kyō","today","n"],
+    ["は","は","wa","(topic particle)","p"],
+    ["いい","いい","ii","good","a"],
+    ["一日","いちにち","ichinichi","(one) day","n"],
+    ["でした","でした","deshita","was (polite copula, past)","o"],
+    "。",
+    ["お風呂","おふろ","ofuro","bath","n"],
+    ["に","に","ni","(お風呂に入る = to take a bath)","p"],
+    ["入って","はいって","haitte","enter; take (a bath) (て-form)","v","入る"],
+    ["から","から","kara","after (て-form + から)","p"],
+    "、",
+    ["少し","すこし","sukoshi","a little (while)","o"],
+    ["テレビ","テレビ","terebi","TV","n"],
+    ["を","を","o","(object particle)","p"],
+    ["見て","みて","mite","watch (て-form)","v","見る"],
+    "、",
+    ["十時半","じゅうじはん","jūjihan","half past ten","n"],
+    ["に","に","ni","at (time particle)","p"],
+    ["寝ました","ねました","nemashita","went to bed; slept (past)","v","寝る"],
+    "。"
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded word (its lemma when given). The selection
+   is remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "jisho",   name: "Jisho",   url: "https://jisho.org/search/{q}" },
+  { id: "weblio",  name: "Weblio",  url: "https://ejje.weblio.jp/content/{q}" },
+  { id: "tatoeba", name: "Tatoeba", url: "https://tatoeba.org/en/sentences/search?from=jpn&to=eng&query={q}" }
+];
+const DICT_DEFAULT = ["jisho"];             // ticked on first visit
+const DICT_STORAGE_KEY = "watashi_no_ichinichi.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+  const POS = new Set(["n", "v", "a", "p", "o"]);
+
+  DATA.forEach(paragraph => {
+    const p = document.createElement("p");
+    paragraph.forEach(tok => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const [surface, kana, romaji, en, pos, lemma] = tok;
+      if (!POS.has(pos)) {
+        console.warn("Unknown part-of-speech code:", surface, pos);
+      }
+      const w = document.createElement("span");
+      w.className = "w pos-" + (POS.has(pos) ? pos : "o");
+      w.tabIndex = 0;
+      w.dataset.surface = surface;
+      w.dataset.lookup = lemma || surface;
+      w.dataset.reading = kana;
+      w.dataset.romaji = romaji;
+      w.dataset.en = en;
+      w.setAttribute("aria-label", surface + ", " + kana + ", " + romaji + ", " + en);
+      w.textContent = surface;
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipReading = tip.querySelector(".reading");
+  const tipRomaji = tip.querySelector(".romaji");
+  const tipEn = tip.querySelector(".en");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) current.classList.remove("active");
+    current = el;
+    el.classList.add("active");
+    tipReading.textContent = el.dataset.reading;
+    tipRomaji.textContent = el.dataset.romaji;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) current.classList.remove("active");
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  const reader = document.getElementById("reader");
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current === w) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.lookup);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>
