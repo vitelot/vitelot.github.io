@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>美丽的四季 · A2 Reader</title>
+<meta name="description" content="An interactive A2-level Mandarin reading text with tone-coloured characters, hover/tap tooltips showing pinyin and English, click-to-search in online dictionaries, and an audio recording.">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e6e2d8;
+    --accent: #2563eb;
+    --tip-bg: #1f2328;
+    --tip-ink: #ffffff;
+    --tip-pinyin: #ffd166;
+    --t1: #B7950B;   /* 1st tone: amber (darkened for contrast on light bg) */
+    --t2: #E74C3C;   /* 2nd tone: red   */
+    --t3: #27AE60;   /* 3rd tone: green */
+    --t4: #2980B9;   /* 4th tone: blue  */
+    --t5: #7F8C8D;   /* neutral: gray   */
+    --shadow: 0 10px 30px rgba(20, 20, 30, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card: #1e2126;
+      --ink: #e8e6e1;
+      --muted: #9aa0a6;
+      --line: #2c3037;
+      --accent: #7aa2ff;
+      --tip-bg: #f3f1ec;
+      --tip-ink: #1f2328;
+      --tip-pinyin: #9a6b00;
+      --t1: #F1C40F;
+      --t2: #FF6B5B;
+      --t3: #2ECC71;
+      --t4: #5DADE2;
+      --t5: #9AA3A6;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card: #1e2126;
+    --ink: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #2c3037;
+    --accent: #7aa2ff;
+    --tip-bg: #f3f1ec;
+    --tip-ink: #1f2328;
+    --tip-pinyin: #9a6b00;
+    --t1: #F1C40F;
+    --t2: #FF6B5B;
+    --t3: #2ECC71;
+    --t4: #5DADE2;
+    --t5: #9AA3A6;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+                 "Source Han Sans SC", -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 80px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 18px 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .legend .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .legend .swatch {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .legend .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* Dictionary selector + audio panels */
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .panel:last-of-type { margin-bottom: 22px; }
+  .panel .label { font-weight: 600; color: var(--ink); margin-right: 4px; }
+  .panel .hint {
+    flex-basis: 100%;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .dicts .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--ink);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .dicts input[type="checkbox"] {
+    width: 16px; height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .dicts .blocked {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--t2) 12%, transparent);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .dicts .blocked[hidden] { display: none; }
+  .dicts .blocked button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+  }
+  .dicts .blocked button:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .audio audio {
+    flex: 1 1 240px;
+    min-width: 200px;
+    height: 36px;
+  }
+
+  /* Reading card */
+  .reader {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    box-shadow: var(--shadow);
+  }
+  .reader p {
+    font-size: 24px;
+    line-height: 2.3;
+    margin: 0 0 1.1em;
+    text-align: justify;
+    text-justify: inter-ideograph;
+    letter-spacing: 0.02em;
+  }
+  .reader p:last-child { margin-bottom: 0; }
+
+  .w {
+    display: inline;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 1px;
+    transition: background-color 120ms ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .w:hover, .w:focus-visible, .w.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .punct { color: var(--ink); }
+
+  .t1 { color: var(--t1); }
+  .t2 { color: var(--t2); }
+  .t3 { color: var(--t3); }
+  .t4 { color: var(--t4); }
+  .t5 { color: var(--t5); }
+
+  /* Tooltip */
+  #tip {
+    position: absolute;
+    z-index: 1000;
+    max-width: min(320px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--tip-bg);
+    color: var(--tip-ink);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    font-size: 15px;
+    line-height: 1.45;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    visibility: hidden;
+  }
+  #tip.show { opacity: 1; transform: translateY(0); visibility: visible; }
+  #tip .pinyin {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--tip-pinyin);
+    font-family: "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    letter-spacing: 0.01em;
+  }
+  #tip .en { margin-top: 2px; }
+  #tip::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    width: 10px; height: 10px;
+    background: var(--tip-bg);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  #tip.above::after { bottom: -5px; }
+  #tip.below::after { top: -5px; }
+
+  footer {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    body { padding-top: 20px; }
+    h1 { font-size: 32px; }
+    .reader { padding: 20px 16px 14px; }
+    .reader p { font-size: 22px; line-height: 2.2; text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">Mandarin reader · CEFR A2 / HSK 2–3</p>
+    <h1 id="title"></h1>
+    <p class="subtitle">Hover over a word to see its pinyin and meaning; click it to look it up in the dictionaries you select below.</p>
+  </header>
+
+  <div class="legend" aria-label="Tone colour key">
+    <span class="label">Tone colours</span>
+    <span class="key"><span class="swatch" style="background:var(--t1)">ā</span>1st · flat</span>
+    <span class="key"><span class="swatch" style="background:var(--t2)">á</span>2nd · rising</span>
+    <span class="key"><span class="swatch" style="background:var(--t3)">ǎ</span>3rd · dipping</span>
+    <span class="key"><span class="swatch" style="background:var(--t4)">à</span>4th · falling</span>
+    <span class="key"><span class="swatch" style="background:var(--t5)">a</span>neutral</span>
+    <span class="hint">Each character is coloured by its dictionary tone. On mobile, tap a word to pin its tooltip; tap elsewhere or press Esc to close.</span>
+  </div>
+
+  <div class="panel dicts" id="dicts" role="group" aria-label="Dictionaries to open on click">
+    <span class="label">Look up on click</span>
+    <!-- one checkbox per entry of DICTIONARIES is inserted here by the script -->
+    <span class="hint">Clicking a word opens its search in one tab per selected dictionary. Each dictionary keeps its own tab, which is updated at every click. Untick all to only pin the tooltip on click.</span>
+    <div class="blocked" id="dict-blocked" hidden></div>
+  </div>
+
+  <div class="panel audio" aria-label="Audio recording of the text">
+    <span class="label">Listen</span>
+    <audio controls preload="metadata" src="meilidesiji.mp3">Your browser does not support the audio element.</audio>
+  </div>
+
+  <article class="reader" id="reader" aria-live="polite"></article>
+
+  <footer>Approx. 320 characters · the beauty of the four seasons: flowers and birds, swimming and watermelon, red leaves and harvest, snow and family · dictionaries: MDBG, Arch Chinese, LEO, Tatoeba</footer>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="pinyin"></div>
+  <div class="en"></div>
+</div>
+
+<script>
+/* ---------- Text data ----------
+   Each paragraph is an array of tokens.
+   Word token: [hanzi, pinyin, english, tones]  where tones = one digit per character (1-4, 5 = neutral).
+   Punctuation token: a plain string (no tooltip, neutral colour).
+*/
+const TITLE = "美丽的四季";
+/*DATA-START*/
+const DATA = [
+  [
+    ["一年", "yī nián", "one year", "12"],
+    ["有", "yǒu", "has; there are", "3"],
+    ["四个", "sì ge", "four (+ measure word)", "45"],
+    ["季节", "jìjié", "seasons", "42"],
+    "：",
+    ["春天", "chūntiān", "spring", "11"],
+    "、",
+    ["夏天", "xiàtiān", "summer", "41"],
+    "、",
+    ["秋天", "qiūtiān", "autumn", "11"],
+    ["和", "hé", "and", "2"],
+    ["冬天", "dōngtiān", "winter", "11"],
+    "。",
+    ["每个", "měi ge", "each; every (+ measure word)", "35"],
+    ["季节", "jìjié", "season", "42"],
+    ["都", "dōu", "all (每 … 都 = every)", "1"],
+    ["有", "yǒu", "has", "3"],
+    ["自己", "zìjǐ", "own; oneself", "43"],
+    ["的", "de", "(possessive particle)", "5"],
+    ["颜色", "yánsè", "colour", "24"],
+    "，",
+    ["也", "yě", "also", "3"],
+    ["有", "yǒu", "has", "3"],
+    ["自己", "zìjǐ", "own", "43"],
+    ["的", "de", "(possessive particle)", "5"],
+    ["美", "měi", "beauty", "3"],
+    "。",
+    ["春天", "chūntiān", "spring", "11"],
+    ["来", "lái", "to come", "2"],
+    ["了", "le", "(了: completed action / new situation)", "5"],
+    "，",
+    ["天气", "tiānqì", "weather", "14"],
+    ["慢慢", "mànmàn", "slowly; gradually", "44"],
+    ["变", "biàn", "to become; to turn", "4"],
+    ["暖和", "nuǎnhuo", "warm", "35"],
+    "，",
+    ["花", "huā", "flowers", "1"],
+    ["都", "dōu", "all", "1"],
+    ["开", "kāi", "to open; to bloom", "1"],
+    ["了", "le", "(了: change of state)", "5"],
+    "，",
+    ["树", "shù", "trees", "4"],
+    ["也", "yě", "also", "3"],
+    ["绿", "lǜ", "green (here: turn green)", "4"],
+    ["了", "le", "(了: change of state)", "5"],
+    "。",
+    ["小鸟", "xiǎoniǎo", "little birds", "33"],
+    ["在", "zài", "at; in (location)", "4"],
+    ["树上", "shù shang", "in the trees (上 = on, on top of)", "45"],
+    ["唱歌", "chànggē", "to sing", "41"],
+    "，",
+    ["人们", "rénmen", "people (们 = plural)", "25"],
+    ["喜欢", "xǐhuan", "to like", "35"],
+    ["去", "qù", "to go (to)", "4"],
+    ["公园", "gōngyuán", "park", "12"],
+    ["散步", "sànbù", "to take a walk", "44"],
+    "、",
+    ["看", "kàn", "to look at", "4"],
+    ["花", "huā", "flowers", "1"],
+    "。",
+    ["春天", "chūntiān", "spring", "11"],
+    ["是", "shì", "is", "4"],
+    ["一个", "yī ge", "a; one (+ measure word)", "14"],
+    ["新", "xīn", "new", "1"],
+    ["的", "de", "(adjective + 的 + noun)", "5"],
+    ["开始", "kāishǐ", "beginning", "13"],
+    "。"
+  ],
+  [
+    ["夏天", "xiàtiān", "summer", "41"],
+    ["很", "hěn", "very (links the adjective predicate)", "3"],
+    ["热", "rè", "hot", "4"],
+    "，",
+    ["太阳", "tàiyáng", "sun", "42"],
+    ["很", "hěn", "very", "3"],
+    ["大", "dà", "big; strong (of the sun)", "4"],
+    "。",
+    ["白天", "báitiān", "daytime", "21"],
+    "，",
+    ["孩子们", "háizimen", "children", "255"],
+    ["在", "zài", "in (location)", "4"],
+    ["河里", "hé li", "in the river (里 = inside)", "25"],
+    ["游泳", "yóuyǒng", "to swim", "23"],
+    "，",
+    ["大人", "dàren", "adults", "45"],
+    ["在", "zài", "at", "4"],
+    ["树下", "shù xia", "under the trees (下 = below)", "45"],
+    ["喝茶", "hē chá", "to drink tea", "12"],
+    "。",
+    ["晚上", "wǎnshang", "evening", "35"],
+    "，",
+    ["天气", "tiānqì", "weather", "14"],
+    ["凉快", "liángkuai", "pleasantly cool", "25"],
+    ["一点儿", "yīdiǎnr", "a little (adjective + 一点儿 = a bit more)", "135"],
+    "，",
+    ["大家", "dàjiā", "everyone", "41"],
+    ["坐", "zuò", "to sit", "4"],
+    ["在", "zài", "at (坐在 = sit at/in)", "4"],
+    ["外面", "wàimiàn", "outside", "44"],
+    ["吃", "chī", "to eat", "1"],
+    ["西瓜", "xīguā", "watermelon", "11"],
+    "、",
+    ["聊天", "liáotiān", "to chat", "21"],
+    "。",
+    ["夏天", "xiàtiān", "summer", "41"],
+    ["的", "de", "(possessive particle)", "5"],
+    ["夜空", "yèkōng", "night sky", "41"],
+    ["很", "hěn", "very", "3"],
+    ["美", "měi", "beautiful", "3"],
+    "，",
+    ["有", "yǒu", "there are", "3"],
+    ["很多", "hěn duō", "many; a lot of", "31"],
+    ["星星", "xīngxing", "stars", "15"],
+    "。"
+  ],
+  [
+    ["秋天", "qiūtiān", "autumn", "11"],
+    ["来", "lái", "to come", "2"],
+    ["了", "le", "(了: new situation)", "5"],
+    "，",
+    ["天气", "tiānqì", "weather", "14"],
+    ["不", "bù", "not", "4"],
+    ["冷", "lěng", "cold", "3"],
+    ["也", "yě", "nor (不 … 也不 = neither … nor)", "3"],
+    ["不", "bù", "not", "4"],
+    ["热", "rè", "hot", "4"],
+    "，",
+    ["是", "shì", "is", "4"],
+    ["我", "wǒ", "I; my", "3"],
+    ["最", "zuì", "most (最喜欢的 = favourite)", "4"],
+    ["喜欢", "xǐhuan", "to like", "35"],
+    ["的", "de", "(modifier + 的 + noun)", "5"],
+    ["季节", "jìjié", "season", "42"],
+    "。",
+    ["树叶", "shùyè", "leaves (of trees)", "44"],
+    ["变成", "biànchéng", "to turn into; to become", "42"],
+    ["了", "le", "(了: completed change)", "5"],
+    ["红色", "hóngsè", "red (colour)", "24"],
+    ["和", "hé", "and", "2"],
+    ["黄色", "huángsè", "yellow", "24"],
+    "，",
+    ["风", "fēng", "wind", "1"],
+    ["一", "yī", "as soon as (一 … 就 = as soon as … then)", "1"],
+    ["吹", "chuī", "to blow", "1"],
+    "，",
+    ["叶子", "yèzi", "leaves", "45"],
+    ["就", "jiù", "then; right away (一 … 就)", "4"],
+    ["从", "cóng", "from", "2"],
+    ["树上", "shù shang", "the trees (上 = on)", "45"],
+    ["掉下来", "diào xiàlai", "fall down (掉 + directional complement 下来)", "455"],
+    "。",
+    ["农民", "nóngmín", "farmers", "22"],
+    ["很", "hěn", "very", "3"],
+    ["忙", "máng", "busy", "2"],
+    "，",
+    ["因为", "yīnwèi", "because", "14"],
+    ["水果", "shuǐguǒ", "fruit", "33"],
+    ["和", "hé", "and", "2"],
+    ["米", "mǐ", "rice (grain)", "3"],
+    ["都", "dōu", "all", "1"],
+    ["熟", "shú", "ripe", "2"],
+    ["了", "le", "(了: change of state)", "5"],
+    "。",
+    ["苹果", "píngguǒ", "apples", "23"],
+    ["又", "yòu", "both … (又 … 又 = both … and)", "4"],
+    ["大", "dà", "big", "4"],
+    ["又", "yòu", "… and", "4"],
+    ["甜", "tián", "sweet", "2"],
+    "，",
+    ["大家", "dàjiā", "everyone", "41"],
+    ["都", "dōu", "all", "1"],
+    ["很", "hěn", "very", "3"],
+    ["高兴", "gāoxìng", "happy; glad", "14"],
+    "。"
+  ],
+  [
+    ["冬天", "dōngtiān", "winter", "11"],
+    ["很", "hěn", "very", "3"],
+    ["冷", "lěng", "cold", "3"],
+    "，",
+    ["有时候", "yǒu shíhou", "sometimes", "325"],
+    ["会", "huì", "will; is likely to", "4"],
+    ["下雪", "xià xuě", "to snow (下 = to fall + 雪 = snow)", "43"],
+    "。",
+    ["下雪", "xià xuě", "snowing", "43"],
+    ["以后", "yǐhòu", "after", "34"],
+    "，",
+    ["房子", "fángzi", "houses", "25"],
+    "、",
+    ["路", "lù", "roads", "4"],
+    ["和", "hé", "and", "2"],
+    ["山", "shān", "mountains", "1"],
+    ["都", "dōu", "all", "1"],
+    ["变成", "biànchéng", "to turn into", "42"],
+    ["了", "le", "(了: completed change)", "5"],
+    ["白色", "báisè", "white (colour)", "24"],
+    "，",
+    ["非常", "fēicháng", "very; extremely", "12"],
+    ["漂亮", "piàoliang", "beautiful; pretty", "45"],
+    "。",
+    ["孩子们", "háizimen", "children", "255"],
+    ["在", "zài", "in", "4"],
+    ["外面", "wàimiàn", "outside", "44"],
+    ["堆雪人", "duī xuěrén", "to build a snowman (堆 = to pile up)", "132"],
+    "，",
+    ["大人", "dàren", "adults", "45"],
+    ["在", "zài", "at", "4"],
+    ["家里", "jiā li", "home (里 = inside)", "15"],
+    ["喝", "hē", "to drink", "1"],
+    ["热茶", "rè chá", "hot tea", "42"],
+    "。",
+    ["一家人", "yī jiā rén", "the whole family", "112"],
+    ["坐", "zuò", "to sit", "4"],
+    ["在", "zài", "at", "4"],
+    ["一起", "yīqǐ", "together", "13"],
+    "，",
+    ["又", "yòu", "both …", "4"],
+    ["暖和", "nuǎnhuo", "warm", "35"],
+    ["又", "yòu", "… and", "4"],
+    ["开心", "kāixīn", "happy; cheerful", "11"],
+    "。",
+    ["四个", "sì ge", "the four", "45"],
+    ["季节", "jìjié", "seasons", "42"],
+    ["都", "dōu", "all", "1"],
+    ["不", "bù", "not", "4"],
+    ["一样", "yīyàng", "the same (不一样 = different)", "14"],
+    "，",
+    ["但是", "dànshì", "but", "44"],
+    ["每一个", "měi yī ge", "every single one", "315"],
+    ["都", "dōu", "all", "1"],
+    ["很", "hěn", "very", "3"],
+    ["美", "měi", "beautiful", "3"],
+    "。"
+  ]
+];
+/*DATA-END*/
+
+/* ---------- Dictionaries ----------
+   Clicking a word opens its search page in a new tab for every dictionary ticked
+   in the "Look up on click" panel. To add a dictionary, append an entry here:
+   {q} is replaced by the URL-encoded word. The selection is remembered per browser.
+*/
+const DICTIONARIES = [
+  { id: "mdbg",    name: "MDBG",         url: "https://www.mdbg.net/chinese/dictionary?page=worddict&email=&wdrst=0&wdqb={q}" },
+  { id: "arch",    name: "Arch Chinese", url: "https://www.archchinese.com/chinese_english_dictionary.html?find={q}" },
+  { id: "leo",     name: "LEO zh–de",    url: "https://dict.leo.org/chinesisch-deutsch/{q}" },
+  { id: "tatoeba", name: "Tatoeba",      url: "https://tatoeba.org/en/sentences/search?query={q}" }
+];
+const DICT_DEFAULT = ["mdbg"];              // ticked on first visit
+const DICT_STORAGE_KEY = "mei_li_de_si_ji.dicts";
+
+const Dict = (function dictionaries() {
+  const box = document.getElementById("dicts");
+  const hint = box.querySelector(".hint");
+  let selected = new Set(DICT_DEFAULT);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICT_STORAGE_KEY));
+    if (Array.isArray(saved)) {
+      selected = new Set(saved.filter(id => DICTIONARIES.some(d => d.id === id)));
+    }
+  } catch (_) { /* storage unavailable: keep defaults */ }
+
+  function save() {
+    try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify([...selected])); } catch (_) {}
+  }
+
+  DICTIONARIES.forEach(d => {
+    const label = document.createElement("label");
+    label.className = "opt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = d.id;
+    cb.checked = selected.has(d.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selected.add(d.id); else selected.delete(d.id);
+      save();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(d.name));
+    box.insertBefore(label, hint);
+  });
+
+  const blockedBox = document.getElementById("dict-blocked");
+  let lastWord = "";
+
+  // Each dictionary gets a stable window name. Browsers allow only one *new*
+  // window per click, but navigating an already open named tab is always
+  // allowed, so after the first time every selected tab updates on each click.
+  function openOne(d, word) {
+    return window.open(d.url.replace("{q}", encodeURIComponent(word)), "reader-dict-" + d.id);
+  }
+
+  function showBlocked(blocked) {
+    blockedBox.textContent = "";
+    if (!blocked.length) { blockedBox.hidden = true; return; }
+    const msg = document.createElement("span");
+    msg.textContent = "Pop-up blocked for " + blocked.map(d => d.name).join(", ") +
+      ". Open " + (blocked.length > 1 ? "them" : "it") + " once here; afterwards " +
+      (blocked.length > 1 ? "they update" : "it updates") +
+      " automatically. To skip this step, allow pop-ups for this page.";
+    blockedBox.appendChild(msg);
+    blocked.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "Open " + d.name;
+      b.addEventListener("click", () => {
+        if (!openOne(d, lastWord)) return;
+        b.remove();
+        if (!blockedBox.querySelector("button")) blockedBox.hidden = true;
+      });
+      blockedBox.appendChild(b);
+    });
+    blockedBox.hidden = false;
+  }
+
+  function open(word) {
+    lastWord = word;
+    const blocked = DICTIONARIES.filter(d => selected.has(d.id) && !openOne(d, word));
+    showBlocked(blocked);
+  }
+
+  return { open, any: () => selected.size > 0 };
+})();
+
+/* ---------- Rendering ---------- */
+(function render() {
+  document.getElementById("title").textContent = TITLE;
+  const reader = document.getElementById("reader");
+  const frag = document.createDocumentFragment();
+
+  DATA.forEach(paragraph => {
+    const p = document.createElement("p");
+    paragraph.forEach(tok => {
+      if (typeof tok === "string") {
+        const s = document.createElement("span");
+        s.className = "punct";
+        s.textContent = tok;
+        p.appendChild(s);
+        return;
+      }
+      const [hanzi, pinyin, en, tones] = tok;
+      const chars = Array.from(hanzi);
+      if (chars.length !== tones.length) {
+        console.warn("Tone/character length mismatch:", hanzi, tones);
+      }
+      const w = document.createElement("span");
+      w.className = "w";
+      w.tabIndex = 0;
+      w.dataset.hanzi = hanzi;
+      w.dataset.pinyin = pinyin;
+      w.dataset.en = en;
+      w.setAttribute("aria-label", hanzi + ", " + pinyin + ", " + en);
+      chars.forEach((ch, i) => {
+        const c = document.createElement("span");
+        const t = tones[i] || "5";
+        c.className = "t" + t;
+        c.textContent = ch;
+        w.appendChild(c);
+      });
+      p.appendChild(w);
+    });
+    frag.appendChild(p);
+  });
+  reader.appendChild(frag);
+})();
+
+/* ---------- Tooltip behaviour ---------- */
+(function tooltip() {
+  const tip = document.getElementById("tip");
+  const tipPinyin = tip.querySelector(".pinyin");
+  const tipEn = tip.querySelector(".en");
+  let current = null;   // word element currently shown
+  let pinned = false;   // pinned by tap / click / keyboard
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const sx = window.pageXOffset, sy = window.pageYOffset;
+
+    // measure tooltip
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+
+    // vertical: prefer above, flip below when there's no room
+    let above = r.top - th - margin >= 0;
+    if (!above && r.bottom + th + margin > vh && r.top > vh - r.bottom) above = true;
+    const top = above ? r.top - th - margin : r.bottom + margin;
+
+    // horizontal: centre on word, clamp to viewport
+    const cx = r.left + r.width / 2;
+    let left = cx - tw / 2;
+    left = Math.max(16, Math.min(left, vw - tw - 16));
+    const arrowX = Math.max(14, Math.min(cx - left, tw - 14));
+
+    tip.style.left = (left + sx) + "px";
+    tip.style.top = (top + sy) + "px";
+    tip.style.setProperty("--arrow-x", arrowX + "px");
+    tip.classList.toggle("above", above);
+    tip.classList.toggle("below", !above);
+  }
+
+  function show(el) {
+    if (current && current !== el) current.classList.remove("active");
+    current = el;
+    el.classList.add("active");
+    tipPinyin.textContent = el.dataset.pinyin;
+    tipEn.textContent = el.dataset.en;
+    tip.setAttribute("aria-hidden", "false");
+    tip.classList.add("show");
+    position(el);
+  }
+
+  function hide() {
+    if (current) current.classList.remove("active");
+    current = null;
+    pinned = false;
+    tip.classList.remove("show");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  const reader = document.getElementById("reader");
+
+  // Mouse hover (ignore synthetic hover from touch)
+  reader.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w) show(w);
+  });
+  reader.addEventListener("pointerout", e => {
+    if (e.pointerType !== "mouse" || pinned) return;
+    const w = e.target.closest(".w");
+    if (w && !w.contains(e.relatedTarget)) hide();
+  });
+
+  // Tap / click: pin the tooltip and open the selected dictionaries.
+  // With no dictionary selected, a second click on the same word unpins it (toggle).
+  function activate(w) {
+    if (!Dict.any()) {
+      if (pinned && current === w) { hide(); return; }
+      show(w);
+      pinned = true;
+      return;
+    }
+    show(w);
+    pinned = true;
+    Dict.open(w.dataset.hanzi);
+  }
+  reader.addEventListener("click", e => {
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.stopPropagation();
+    activate(w);
+  });
+  reader.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const w = e.target.closest(".w");
+    if (!w) return;
+    e.preventDefault();
+    activate(w);
+  });
+
+  // Keyboard focus
+  reader.addEventListener("focusin", e => {
+    const w = e.target.closest(".w");
+    if (w) { show(w); pinned = true; }
+  });
+  reader.addEventListener("focusout", e => {
+    const w = e.target.closest(".w");
+    if (w && current === w) hide();
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".w")) hide();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hide();
+  });
+  window.addEventListener("resize", () => { if (current) position(current); });
+  window.addEventListener("scroll", () => { if (current) position(current); }, { passive: true });
+})();
+</script>
+</body>
+</html>
