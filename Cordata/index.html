@@ -111,6 +111,7 @@
   button.btn:disabled { opacity: 0.4; cursor: default; }
   button.btn.primary { background: var(--ink); color: var(--light); }
   button.btn.primary:hover:not(:disabled) { background: #26404D; }
+  button.btn.danger { border-color: var(--red); color: var(--red); }
   button.btn:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--amber-deep); outline-offset: 1px; }
   .nav button.btn { min-width: 44px; font-size: 16px; padding: 4px 8px; }
 
@@ -129,6 +130,7 @@
   #moves button.cur { background: var(--ink); color: var(--light); font-weight: 600; }
   #moves button.start { grid-column: 1 / -1; color: var(--ink-soft); }
   #moves button.start.cur { color: var(--light); }
+  #moves .end { grid-column: 1 / -1; color: var(--ink-soft); padding: 3px 6px; }
   #moves button:focus-visible { outline: 2px solid var(--amber-deep); }
 
   #legal { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -269,6 +271,7 @@
       <button class="btn" id="navLast" title="End (End key)" aria-label="Go to the end">⏭</button>
       <button class="btn" id="flip">Flip</button>
       <button class="btn" id="newGame">New game</button>
+      <button class="btn" id="resign">Resign</button>
     </div>
     <div class="row">
       <label for="atkSel">Attacked squares:</label>
@@ -516,6 +519,7 @@
   let atkBy = '';
   let hint = '';
   let editing = false, editBoard = null, brush = 'P';
+  let resignAsk = false, resignAskedAt = 0;   // the Resign button waits for a second click
 
   const current = () => (editing
     ? { board: editBoard, turn: editTurn(), ep: -1, half: 0, full: 1 }
@@ -686,7 +690,7 @@
       for (const p of todo) {
         const st = g.states[p], res = g.results[p];
         let ev;
-        if (res) {
+        if (res && res.reason !== 'resign') {
           ev = { score: res.winner === 'w' ? S.MATE : res.winner === 'b' ? -S.MATE : 0, depth: 0, best: null, bestSan: '', final: true };
         } else {
           const r = await think(reviewBrain, g, p, seconds, false);
@@ -878,12 +882,12 @@
     cancelEngine(); stopReview();
     game = E.createGame(st);
     review = [];
-    ply = 0; selected = -1; pending = null; hint = ''; editing = false;
+    ply = 0; selected = -1; pending = null; hint = ''; editing = false; resignAsk = false;
     render();
   }
 
   function doMove(m, byEngine) {
-    if (!byEngine) cancelEngine();
+    if (!byEngine) { cancelEngine(); resignAsk = false; }
     stopReview();
     if (ply < game.moves.length) E.truncate(game, ply);
     review.length = Math.min(review.length, ply + 1);
@@ -895,8 +899,40 @@
   function goTo(p) {
     cancelEngine();
     ply = Math.max(0, Math.min(game.moves.length, p));
-    selected = -1; pending = null; hint = '';
+    selected = -1; pending = null; hint = ''; resignAsk = false;
     render();
+  }
+
+  // Resignation belongs to the page, not to the rules engine: the result is written on
+  // the last position of the game. The side that resigns is the one the engine does not
+  // play; when the engine plays neither side (two players on one board), the side to move.
+  function resigner() {
+    const last = game.moves.length;
+    if (editing || game.results[last] || engSide === 'wb') return '';
+    return engSide ? E.other(engSide) : game.states[last].turn;
+  }
+
+  function setResigned(side) {
+    game.results[game.moves.length] = { winner: E.other(side), reason: 'resign' };
+  }
+
+  function resign() {
+    const side = resigner();
+    if (!side) return;
+    cancelEngine();
+    setResigned(side);
+    ply = game.moves.length; selected = -1; pending = null; hint = ''; resignAsk = false;
+    render();
+  }
+
+  function renderResign() {
+    const side = resigner(), b = $('resign');
+    if (!side) resignAsk = false;
+    b.disabled = !side;
+    b.textContent = resignAsk ? `${NAME[side]} resigns: confirm` : 'Resign';
+    b.classList.toggle('danger', resignAsk);
+    b.title = side ? `${NAME[side]} gives up the game`
+      : editing ? '' : engSide === 'wb' && !game.results[game.moves.length] ? 'The engine plays both sides' : 'The game is over';
   }
 
   // -------------------------------------------------------------- interaction
@@ -1001,6 +1037,7 @@
   function resultText(res, st) {
     if (res.winner) {
       const w = NAME[res.winner], l = NAME[E.other(res.winner)];
+      if (res.reason === 'resign') return `<span class="result">${w} wins</span> ${l} resigned.`;
       const why = {
         matto: `by checkmate (${ref('6.1a')}).`,
         stallo: `by stalemate: ${l} is not in check and has no legal move (${ref('6.1b')}).`,
@@ -1072,9 +1109,14 @@
       html += `<span class="num">${num}.</span>`;
       for (let j = i; j < i + 2; j++) html += j < game.sans.length ? cell(j) : '<span></span>';
     }
+    const end = game.results[game.moves.length];
+    const resigned = !editing && end && end.reason === 'resign';
+    if (resigned) html += `<span class="end">${NAME[E.other(end.winner)]} resigned</span>`;
     box.innerHTML = html;
     const cur = box.querySelector('.cur');
-    if (cur) {
+    if (resigned && ply === game.moves.length) {
+      box.scrollTop = box.scrollHeight;
+    } else if (cur) {
       const top = cur.offsetTop - box.offsetTop;
       if (top < box.scrollTop) box.scrollTop = top;
       else if (top + cur.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = top + cur.offsetHeight - box.clientHeight;
@@ -1124,6 +1166,7 @@
     renderEditor();
     renderEngine();
     renderReview();
+    renderResign();
     if (document.activeElement !== $('posText')) $('posText').value = posText(st);
     maybeEngine();
   }
@@ -1163,6 +1206,18 @@
   $('navLast').addEventListener('click', () => goTo(game.moves.length));
   $('flip').addEventListener('click', () => { flipped = !flipped; render(); });
   $('newGame').addEventListener('click', () => { $('examples').value = '0'; showExample(0); load(E.initial()); });
+  // First click asks, second click resigns (not within 0.4 s, so that a double click does
+  // not resign by accident); any other click, or Escape, withdraws the question.
+  $('resign').addEventListener('click', () => {
+    if (!resignAsk) { resignAsk = true; resignAskedAt = Date.now(); renderResign(); }
+    else if (Date.now() - resignAskedAt > 400) resign();
+  });
+  document.addEventListener('click', ev => {
+    if (resignAsk && ev.target !== $('resign')) { resignAsk = false; renderResign(); }
+  }, true);
+  document.addEventListener('keydown', ev => {
+    if (resignAsk && ev.key === 'Escape') { resignAsk = false; renderResign(); }
+  });
   $('atkSel').addEventListener('change', ev => { atkBy = ev.target.value; render(); });
   $('engSide').addEventListener('change', ev => { engSide = ev.target.value; cancelEngine(); render(); });
   $('engKind').addEventListener('change', ev => { engKind = ev.target.value; cancelEngine(); render(); });
@@ -1237,7 +1292,8 @@
   });
 
   // Opening on a given state, for automatic checks: ?pos=<position>&moves=b4,c×b3&click=d3,d4
-  // &atk=w|b&engine=w|b|wb&time=<seconds>&review=<seconds per position>&rules[=<paragraph>].
+  // &atk=w|b&engine=w|b|wb&time=<seconds>&review=<seconds per position>&rules[=<paragraph>]
+  // &resign=w|b (that side has resigned after the moves).
   const params = new URLSearchParams(location.search);
   showExample(0);
   if (params.get('pos')) { try { game = E.createGame(parsePos(params.get('pos'))); } catch (err) { /* keep the starting position */ } }
@@ -1247,6 +1303,7 @@
     if (!m || game.results[game.results.length - 1]) break;
     E.play(game, m);
   }
+  if (/^[wb]$/.test(params.get('resign') || '') && !game.results[game.moves.length]) setResigned(params.get('resign'));
   ply = game.moves.length;
   if (params.get('at')) ply = Math.max(0, Math.min(ply, Number(params.get('at')) || 0));
   if (params.get('atk')) { atkBy = params.get('atk'); $('atkSel').value = atkBy; }
