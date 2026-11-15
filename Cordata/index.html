@@ -197,12 +197,12 @@
   #revInfo .warn { color: var(--red); font-weight: 600; }
 
   /* ---------------------------------------------------------------- rules */
-  dialog#rules {
+  dialog.dlg {
     width: min(780px, 94vw); max-height: 90vh; padding: 0; color: var(--ink); background: var(--panel);
     border: 2px solid var(--ink); border-radius: 6px; box-shadow: 0 16px 48px rgba(22, 36, 44, 0.5);
   }
-  dialog#rules[open] { display: flex; flex-direction: column; }
-  dialog#rules::backdrop { background: rgba(22, 36, 44, 0.55); }
+  dialog.dlg[open] { display: flex; flex-direction: column; }
+  dialog.dlg::backdrop { background: rgba(22, 36, 44, 0.55); }
   .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--rule); }
   .dlg-head strong { font-size: 17px; }
   .rules { overflow-y: auto; padding: 4px 18px 20px; line-height: 1.5; }
@@ -215,6 +215,34 @@
   .rules pre, .rules code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
   .rules pre { margin: 0 0 10px; padding: 10px 14px; background: #fff; border: 1px solid var(--rule); border-radius: 4px; overflow-x: auto; line-height: 1.35; }
   .rules p.mark { background: rgba(242, 182, 60, 0.4); box-shadow: 0 0 0 5px rgba(242, 182, 60, 0.4); border-radius: 2px; }
+
+  /* ---------------------------------------------------------------- setup */
+  dialog#setup { width: min(470px, 94vw); }
+  .setup { overflow-y: auto; padding: 12px 16px 16px; display: grid; gap: 10px; --slot: min(56px, 15vw); }
+  .setup p { margin: 0; }
+  .setup h3 { margin: 0 0 4px; font-size: 15px; }
+  .setup h3 span { font-weight: 400; color: var(--ink-soft); }
+  .setup-pieces { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .setup-pieces button {
+    display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 10px 0 4px; font: inherit; font-weight: 600; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--ink); border-radius: 4px; cursor: pointer;
+  }
+  .setup-pieces button svg { width: 34px; height: 34px; }
+  .setup-pieces button.on { background: var(--amber); }
+  .setup-rank { display: grid; grid-template-columns: repeat(5, var(--slot)); width: max-content; border: 2px solid var(--ink); }
+  .setup-rank button {
+    width: var(--slot); height: var(--slot); padding: 0; border: 0; border-radius: 0; cursor: pointer;
+    display: grid; place-items: center; font: inherit; font-size: 22px; font-weight: 700; color: var(--ink);
+  }
+  .setup-rank button.light { background: var(--light); }
+  .setup-rank button.dark { background: var(--dark); }
+  .setup-rank button:disabled { cursor: default; }
+  .setup-rank button:hover:not(:disabled) { box-shadow: inset 0 0 0 var(--slot) rgba(242, 182, 60, 0.45); }
+  .setup-rank button:focus-visible, .setup-pieces button:focus-visible { outline: 3px solid var(--amber-deep); outline-offset: -3px; }
+  .setup-files { display: grid; grid-template-columns: repeat(5, var(--slot)); width: max-content; padding: 0 2px; justify-items: center; color: var(--ink-soft); font-size: 13px; }
+  .setup .row { margin-top: 6px; }
+  .setup .row button.btn { padding: 3px 9px; font-size: 14px; }
+  #setupHint { color: var(--red); font-weight: 600; font-size: 14px; min-height: 1.4em; }
 </style>
 </head>
 <body>
@@ -236,6 +264,13 @@
       <circle cx="22.5" cy="14.5" r="1.5" fill="currentColor" stroke="none"/>
       <rect x="11.5" y="36.5" width="25" height="6.5" rx="2"/>
     </symbol>
+    <symbol id="pc-A" viewBox="0 0 48 48">
+      <path d="M18 37 C18 31.5 21 30 21.5 26.5 H26.5 C27 30 30 31.5 30 37 Z"/>
+      <path d="M24 8 C30 13 32.5 17.5 32.5 21 C32.5 25.5 29 28 24 28 C19 28 15.5 25.5 15.5 21 C15.5 17.5 18 13 24 8 Z"/>
+      <path d="M27 13.5 L23 20.5" fill="none" stroke="currentColor"/>
+      <circle cx="24" cy="6" r="2.5"/>
+      <rect x="11.5" y="36.5" width="25" height="6.5" rx="2"/>
+    </symbol>
     <symbol id="pc-R" viewBox="0 0 48 48">
       <path d="M24 16 C13 13 8.5 21 13.5 29 L16.5 37 H31.5 L34.5 29 C39.5 21 35 13 24 16 Z"/>
       <path d="M22.4 3 H25.6 V6.6 H29.2 V9.8 H25.6 V15.5 H22.4 V9.8 H18.8 V6.6 H22.4 Z"/>
@@ -249,7 +284,7 @@
     <h1>Cordata</h1>
     <button class="btn primary" id="rulesOpen" aria-haspopup="dialog">Rules</button>
   </div>
-  <p>Chess on a 5×8 board with kings, rooks, knights and pawns. Two or more pawns in a column form a battery, which advances as a block and captures straight ahead; a pawn that reaches the last rank wins, and so does the player who stalemates the opponent. Play a friend on the same board or play the engine: only legal moves are allowed, and the numbers in brackets point to the paragraphs of the rules.</p>
+  <p>Chess on a 5×8 board with kings, rooks, knights, bishops and pawns: each player chooses the pieces of the back rank before the game. Two or more pawns in a column form a battery, which advances as a block and captures straight ahead; a pawn that reaches the last rank wins, and so does the player who stalemates the opponent. Play a friend on the same board or play the engine: only legal moves are allowed, and the numbers in brackets point to the paragraphs of the rules.</p>
 </header>
 
 <main>
@@ -270,7 +305,7 @@
       <button class="btn" id="navNext" title="Forward (right arrow)" aria-label="Next move">▶</button>
       <button class="btn" id="navLast" title="End (End key)" aria-label="Go to the end">⏭</button>
       <button class="btn" id="flip">Flip</button>
-      <button class="btn" id="newGame">New game</button>
+      <button class="btn" id="newGame" aria-haspopup="dialog">New game</button>
       <button class="btn" id="resign">Resign</button>
     </div>
     <div class="row">
@@ -376,7 +411,7 @@
           <button class="btn" id="editCancel">Cancel</button>
         </div>
       </div>
-      <p class="muted" style="margin-top:8px">Format: ranks from the eighth to the first, <b>R N K P</b> for rook, knight, king, pawn (upper case White, lower case Black), digits for empty squares; then <b>w</b> or <b>b</b> for the side to move and the en passant square, or “-”.</p>
+      <p class="muted" style="margin-top:8px">Format: ranks from the eighth to the first, <b>R N B K P</b> for rook, knight, bishop, king, pawn (upper case White, lower case Black), digits for empty squares; then <b>w</b> or <b>b</b> for the side to move and the en passant square, or “-”.</p>
     </div>
     <div class="panel">
       <h2>How to read</h2>
@@ -388,14 +423,55 @@
         <dt>b×b5[3]</dt><dd>block of 3 pawns capturing straight ahead on b5</dd>
         <dt>a×b5</dt><dd>diagonal capture by a pawn; “e.p.” if en passant</dd>
         <dt>ab5</dt><dd>hitch: the pawn of the a-file steps to b5 without capturing (<a class="ref" href="#" data-r="4.6">4.6</a>)</dd>
-        <dt>K R N</dt><dd>king, rook, knight; “+” check, “#” checkmate</dd>
+        <dt>K R B N</dt><dd>king, rook, bishop, knight; “+” check, “#” checkmate</dd>
         <dt>?! ? ??</dt><dd>after a review: inaccuracy, mistake, blunder</dd>
       </dl>
     </div>
   </section>
 </main>
 
-<dialog id="rules" aria-labelledby="rulesTitle">
+<dialog id="setup" class="dlg" aria-labelledby="setupTitle">
+  <div class="dlg-head">
+    <strong id="setupTitle">New game</strong>
+    <button class="btn" id="setupCancel">Cancel</button>
+  </div>
+  <div class="setup">
+    <p>Each player chooses the five pieces of the back rank: one king, at most two rooks, and knights and bishops as wished, in any order (<a class="ref" href="#" data-r="2.2">2.2</a>). The pawns always start on the same squares.</p>
+    <div>
+      <h3>Piece to place <span>— choose it, then click the squares</span></h3>
+      <div class="setup-pieces" id="setupPieces" role="group" aria-label="Piece to place"></div>
+    </div>
+    <div>
+      <h3 id="setupNameB">Black</h3>
+      <div class="setup-rank" id="setupRankB" role="group" aria-labelledby="setupNameB"></div>
+      <div class="setup-files"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span></div>
+      <div class="row">
+        <button class="btn" data-do="classic" data-c="b">Classic</button>
+        <button class="btn" data-do="random" data-c="b">Random</button>
+        <button class="btn" data-do="copy" data-c="b">Same as White</button>
+        <button class="btn" data-do="hide" data-c="b">Hide</button>
+      </div>
+    </div>
+    <div>
+      <h3 id="setupNameW">White</h3>
+      <div class="setup-rank" id="setupRankW" role="group" aria-labelledby="setupNameW"></div>
+      <div class="setup-files"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span></div>
+      <div class="row">
+        <button class="btn" data-do="classic" data-c="w">Classic</button>
+        <button class="btn" data-do="random" data-c="w">Random</button>
+        <button class="btn" data-do="copy" data-c="w">Same as Black</button>
+        <button class="btn" data-do="hide" data-c="w">Hide</button>
+      </div>
+    </div>
+    <p id="setupHint" role="status" aria-live="polite"></p>
+    <p class="muted">A hidden rank stays secret until the game starts, so that two players at one screen can choose without seeing each other's pieces (<a class="ref" href="#" data-r="2.3">2.3</a>); “Random” works on a hidden rank too.</p>
+    <div class="row">
+      <button class="btn primary" id="setupStart">Start the game</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="rules" class="dlg" aria-labelledby="rulesTitle">
   <div class="dlg-head">
     <strong id="rulesTitle">Rules</strong>
     <button class="btn" id="rulesClose">Close</button>
@@ -412,16 +488,16 @@
   const E = Engine, S = CordataSearch;
   const $ = id => document.getElementById(id);
   const NAME = { w: 'White', b: 'Black' };
-  const PIECE_NAME = { R: 'king', T: 'rook', C: 'knight', P: 'pawn' };   // keys: the engine's piece letters
+  const PIECE_NAME = { R: 'king', T: 'rook', C: 'knight', A: 'bishop', P: 'pawn' };   // keys: the engine's piece letters
 
   // ---------------------------------------------------------------- notation
-  // engine.js writes pieces with Italian letters (T rook, C knight, R king) and the
-  // side to move as B or N. The page shows and reads the English forms: R N K, w or b.
-  const EN = { T: 'R', C: 'N', R: 'K', P: 'P', t: 'r', c: 'n', r: 'k', p: 'p' };
+  // engine.js writes pieces with Italian letters (T rook, C knight, A bishop, R king) and
+  // the side to move as B or N. The page shows and reads the English forms: R N B K, w or b.
+  const EN = { T: 'R', C: 'N', A: 'B', R: 'K', P: 'P', t: 'r', c: 'n', a: 'b', r: 'k', p: 'p' };
   const FROM_EN = {};
   for (const k of Object.keys(EN)) FROM_EN[EN[k]] = k;
 
-  const sanEn = text => text.replace(/^[TCR]/, c => EN[c]).replace(' (arrivo)', ' (last rank)').replace(' (stallo)', ' (stalemate)');
+  const sanEn = text => text.replace(/^[TCAR]/, c => EN[c]).replace(' (arrivo)', ' (last rank)').replace(' (stallo)', ' (stalemate)');
   const san = (st, m, legal) => sanEn(E.san(st, m, legal));
   const sameMove = (a, b) => a.from === b.from && a.to === b.to && a.kind === b.kind && a.k === b.k;
 
@@ -482,8 +558,10 @@
 
   // Example positions, in the engine's own format.
   const EXAMPLES = [
-    { title: 'Normal game', pos: E.START,
-      text: 'Starting position (section 2): eight pawns a side, with three batteries already formed on the a-, c- and e-files. The knights can leave only after a pawn has moved.' },
+    { title: 'Classic start (2.4)', pos: E.START,
+      text: 'Rooks on a and e, knights on b and d, king on c; eight pawns a side, with three batteries already formed on the a-, c- and e-files. These knights can leave only after a pawn has moved. “New game” lets each player choose other pieces.' },
+    { title: 'A start with bishops and other orders (2.2)', pos: 'crtac/ppppp/p1p1p/5/5/P1P1P/PPPPP/ATRTA B -',
+      text: 'White has chosen two bishops in the corners and two rooks next to the king; Black two knights in the corners, a rook and a bishop, with the king on b8. The pawns are where they always are. Black\'s knights can jump out at once, to b6 and d6.' },
     { title: 'Hitch: forming a battery (4.6)', pos: '4r/5/5/2P2/5/PP3/5/R4 B -',
       text: 'The pawns on a3 and b3 stand side by side: each can step diagonally in front of the other, without capturing (ab4 or ba4). The pawn on b3 can also go to c4, right behind its fellow pawn on c5.' },
     { title: 'Battery of two: block advance and frontal capture (5.2)', pos: '2r2/5/5/1c3/1P3/1P1P1/3P1/2R2 B -',
@@ -1171,6 +1249,104 @@
     maybeEngine();
   }
 
+  // ------------------------------------------------------------------- setup
+  // Choice of the back ranks before a game (2.2). Ranks are written with the engine's
+  // letters from the a-file to the e-file. A brush as in the board editor: choose a
+  // piece, click the squares. The choice is always valid: the king changes places with
+  // the piece on the square clicked, and a third rook is refused.
+  const setupRank = { w: E.CLASSIC, b: E.CLASSIC };
+  const setupHidden = { w: false, b: false };
+  let setupBrush = 'A', setupHint = '';
+  const ALL_RANKS = [];
+  for (let i = 0; i < 4 ** E.NF; i++) {
+    const rank = Array.from({ length: E.NF }, (_, j) => 'TCAR'[Math.floor(i / 4 ** j) % 4]).join('');
+    if (!E.rankErrors(rank).length) ALL_RANKS.push(rank);
+  }
+  const rankEn = rank => rank.replace(/./g, c => EN[c]);
+
+  function setupPaint(c, i) {
+    if (setupHidden[c]) return;
+    const rank = setupRank[c].split(''), k = rank.indexOf(E.KING);
+    setupHint = '';
+    if (setupBrush === E.KING) { rank[k] = rank[i]; rank[i] = E.KING; }
+    else if (i === k) setupHint = 'There must be a king: to move it, choose the king and click its new square.';
+    else if (setupBrush === E.ROOK && rank[i] !== E.ROOK && rank.filter(p => p === E.ROOK).length >= 2) setupHint = 'At most two rooks.';
+    else rank[i] = setupBrush;
+    setupRank[c] = rank.join('');
+    renderSetup();
+  }
+
+  function setupDo(what, c) {
+    setupHint = '';
+    if (what === 'hide') setupHidden[c] = !setupHidden[c];
+    else if (what === 'random') setupRank[c] = ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)];
+    else if (setupHidden[c]) return;
+    else if (what === 'classic') setupRank[c] = E.CLASSIC;
+    else if (what === 'copy' && !setupHidden[E.other(c)]) setupRank[c] = setupRank[E.other(c)];
+    renderSetup();
+  }
+
+  function renderSetup() {
+    $('setupPieces').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === setupBrush));
+    for (const c of ['w', 'b']) {
+      const box = $(c === 'w' ? 'setupRankW' : 'setupRankB'), r = c === 'w' ? 0 : E.NR - 1;
+      let html = '';
+      for (let f = 0; f < E.NF; f++) {
+        const p = c === 'w' ? setupRank[c][f] : setupRank[c][f].toLowerCase();
+        const name = `${E.FILE_NAMES[f]}${r + 1}, ${setupHidden[c] ? 'hidden' : `${NAME[c].toLowerCase()} ${PIECE_NAME[E.typeOf(p)]}`}`;
+        html += `<button class="${(f + r) % 2 ? 'light' : 'dark'}" data-c="${c}" data-i="${f}" aria-label="${name}"${setupHidden[c] ? ' disabled' : ''}>` +
+          (setupHidden[c] ? '?' : pieceSvg(p)) + '</button>';
+      }
+      box.innerHTML = html;
+      $(c === 'w' ? 'setupNameW' : 'setupNameB').innerHTML = NAME[c] +
+        (engSide.includes(c) ? ' <span>— played by the engine</span>' : '') + (setupHidden[c] ? ' <span>— hidden</span>' : '');
+    }
+    document.querySelectorAll('#setup [data-do]').forEach(b => {
+      const c = b.dataset.c, what = b.dataset.do;
+      if (what === 'hide') b.textContent = setupHidden[c] ? 'Show' : 'Hide';
+      else b.disabled = what === 'random' ? false : setupHidden[c] || (what === 'copy' && setupHidden[E.other(c)]);
+    });
+    $('setupHint').textContent = setupHint;
+  }
+
+  function openSetup() {
+    setupHint = '';
+    renderSetup();
+    $('setup').showModal();
+    $('setupStart').focus();
+  }
+
+  // Starts a game from the two back ranks and says which they are under "Example positions".
+  function startGame(white, black) {
+    const classic = white === E.CLASSIC && black === E.CLASSIC;
+    $('examples').selectedIndex = classic ? 0 : -1;
+    if (classic) showExample(0);
+    else $('exampleText').textContent = `Game with chosen back ranks, from the a-file to the e-file: White ${rankEn(white)}, Black ${rankEn(black)}.`;
+    $('posError').textContent = '';
+    load(E.startPosition(white, black));
+  }
+
+  for (const p of [E.KING, E.ROOK, E.BISHOP, E.KNIGHT]) {
+    const b = document.createElement('button');
+    b.dataset.p = p;
+    b.innerHTML = pieceSvg(p) + PIECE_NAME[p][0].toUpperCase() + PIECE_NAME[p].slice(1);
+    b.addEventListener('click', () => { setupBrush = p; setupHint = ''; renderSetup(); });
+    $('setupPieces').appendChild(b);
+  }
+  $('setup').addEventListener('click', ev => {
+    if (ev.target === $('setup')) { $('setup').close(); return; }
+    const b = ev.target.closest('button');
+    if (!b) return;
+    if (b.dataset.i !== undefined) setupPaint(b.dataset.c, Number(b.dataset.i));
+    else if (b.dataset.do) setupDo(b.dataset.do, b.dataset.c);
+  });
+  $('setupCancel').addEventListener('click', () => $('setup').close());
+  $('setup').addEventListener('close', () => { setupHidden.w = setupHidden.b = false; });
+  $('setupStart').addEventListener('click', () => {
+    $('setup').close();
+    startGame(setupRank.w, setupRank.b);
+  });
+
   // ------------------------------------------------------------------- rules
   $('rulesBody').innerHTML = self.RULES_HTML || '<p>The rulebook (rulebook.js) is missing.</p>';
 
@@ -1205,7 +1381,7 @@
   $('navNext').addEventListener('click', () => goTo(ply + 1));
   $('navLast').addEventListener('click', () => goTo(game.moves.length));
   $('flip').addEventListener('click', () => { flipped = !flipped; render(); });
-  $('newGame').addEventListener('click', () => { $('examples').value = '0'; showExample(0); load(E.initial()); });
+  $('newGame').addEventListener('click', openSetup);
   // First click asks, second click resigns (not within 0.4 s, so that a double click does
   // not resign by accident); any other click, or Escape, withdraws the question.
   $('resign').addEventListener('click', () => {
@@ -1231,7 +1407,7 @@
   $('engKindRow').hidden = !LOCAL;
 
   document.addEventListener('keydown', ev => {
-    if (editing || $('rules').open || /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) return;
+    if (editing || $('rules').open || $('setup').open || /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) return;
     const to = { ArrowLeft: ply - 1, ArrowRight: ply + 1, Home: 0, End: game.moves.length }[ev.key];
     if (to === undefined) return;
     ev.preventDefault();
@@ -1266,7 +1442,7 @@
   document.querySelectorAll('input[name=editTurn]').forEach(r => r.addEventListener('change', render));
 
   const palette = $('palette');
-  for (const p of ['R', 'T', 'C', 'P', 'r', 't', 'c', 'p', '.']) {
+  for (const p of ['R', 'T', 'A', 'C', 'P', 'r', 't', 'a', 'c', 'p', '.']) {
     const b = document.createElement('button');
     b.dataset.p = p;
     if (p === '.') { b.textContent = '✕'; b.title = 'Remove the piece'; b.setAttribute('aria-label', 'Remove the piece'); }
@@ -1293,10 +1469,18 @@
 
   // Opening on a given state, for automatic checks: ?pos=<position>&moves=b4,c×b3&click=d3,d4
   // &atk=w|b&engine=w|b|wb&time=<seconds>&review=<seconds per position>&rules[=<paragraph>]
-  // &resign=w|b (that side has resigned after the moves).
+  // &resign=w|b (that side has resigned after the moves), &setup=<white>,<black> (back ranks
+  // from the a-file to the e-file, as in BNKNB,RBKBR; without a value it opens the dialog).
   const params = new URLSearchParams(location.search);
   showExample(0);
   if (params.get('pos')) { try { game = E.createGame(parsePos(params.get('pos'))); } catch (err) { /* keep the starting position */ } }
+  if (params.get('setup')) {
+    try {
+      const [white, black] = params.get('setup').toUpperCase().split(',').map(r => r.replace(/./g, c => FROM_EN[c] || '?'));
+      startGame(white, black);                 // throws when a rank is not allowed
+      setupRank.w = white; setupRank.b = black;
+    } catch (err) { /* keep the starting position */ }
+  }
   for (const text of (params.get('moves') || '').split(',').filter(Boolean)) {
     const st = game.states[game.states.length - 1], legal = E.legalMoves(st);
     const m = legal.find(o => san(st, o, legal) === text);
@@ -1314,6 +1498,7 @@
     onSquare(E.sq(E.FILE_NAMES.indexOf(name[0]), Number(name[1]) - 1));
   }
   if (params.get('review')) { $('revTime').value = params.get('review'); runReview(); }
+  if (params.has('setup') && !params.get('setup')) openSetup();
   if (params.has('rules')) openRules(params.get('rules'));
 })();
 </script>

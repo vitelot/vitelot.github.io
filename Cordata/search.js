@@ -12,19 +12,22 @@
     'use strict';
 
     const NF = 5, NR = 8, NSQ = NF * NR;
-    const PAWN = 1, KNIGHT = 2, ROOK = 3, KING = 4;        // codice sulla scacchiera: tipo + 4 * colore
+    const PAWN = 1, KNIGHT = 2, ROOK = 3, KING = 4, BISHOP = 5;
+    // Codice sulla scacchiera: tipo + 4 * colore per pedone, cavallo, torre e re (1…8);
+    // 9 e 10 per l'alfiere bianco e nero, aggiunto nella v1.2 senza toccare gli altri codici.
     const NORMAL = 0, DOUBLE = 1, ENPASSANT = 2, BLOCK = 3, JOIN = 4;
     const KINDS = ['move', 'double', 'ep', 'block', 'join']; // i nomi usati da engine.js
     const START = 'tcrct/ppppp/p1p1p/5/5/P1P1P/PPPPP/TCRCT B -';
-    const LETTERS = 'PCTR';
+    const LETTERS = 'PCTRA';
 
     const MATE = 30000, MATE_ZONE = MATE - 1000, INF = 32000, MAXPLY = 128, MAXMOVES = 256;
-    const PIECE_VALUE = [0, 100, 300, 500, 0];
+    const PIECE_VALUE = [0, 100, 300, 500, 0, 300];        // pedone, cavallo, torre, re, alfiere
     const ADVANCE = [0, 6, 16, 34, 64, 110];               // premio per i passi fatti da un pedone (0…5)
     const TT_EXACT = 0, TT_LOWER = 1, TT_UPPER = 2;
 
-    const COLOR_OF = new Int8Array([-1, 0, 0, 0, 0, 1, 1, 1, 1]);
-    const TYPE_OF = new Int8Array([0, 1, 2, 3, 4, 1, 2, 3, 4]);
+    const COLOR_OF = new Int8Array([-1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1]);
+    const TYPE_OF = new Int8Array([0, 1, 2, 3, 4, 1, 2, 3, 4, 5, 5]);
+    const codeOf = (c, t) => (t === BISHOP ? 9 + c : t + 4 * c);
 
     function jumpTable(steps) {
       const out = [];
@@ -41,7 +44,12 @@
     const KNIGHT_T = jumpTable([[-2, -1], [-1, -2], [1, -2], [2, -1], [-2, 1], [-1, 2], [1, 2], [2, 1]]);
 
     // Chiavi Zobrist a 64 bit, in due metà da 32: le stesse di src/rules.jl (splitmix64).
-    const NZ = 8 * NSQ + NSQ + 1, Z_EP = 8 * NSQ, Z_TURN = NZ - 1;
+    // Le chiavi degli alfieri sono in coda: le posizioni senza alfieri hanno la chiave della v1.1.
+    // La chiave del pezzo di codice c sulla casa s è la numero (c − 1) * NSQ + s per i codici
+    // 1…8 e Z_BISHOP + (c − 9) * NSQ + s per gli alfieri: ZOFF[c] + s.
+    const Z_EP = 8 * NSQ, Z_TURN = Z_EP + NSQ, Z_BISHOP = Z_TURN + 1, NZ = Z_BISHOP + 2 * NSQ;
+    const ZOFF = new Int32Array(11);
+    for (let c = 1; c <= 10; c++) ZOFF[c] = c <= 8 ? (c - 1) * NSQ : Z_BISHOP + (c - 9) * NSQ;
     const ZLO = new Int32Array(NZ), ZHI = new Int32Array(NZ);
     (function () {
       const M = (1n << 64n) - 1n;
@@ -95,9 +103,9 @@
           const t = LETTERS.indexOf(ch.toUpperCase()) + 1;
           if (!t) throw new Error(`Simbolo non valido "${ch}" nella traversa ${r + 1}.`);
           if (f >= NF) throw new Error(`La traversa ${r + 1} ha più di ${NF} case.`);
-          const c = ch === ch.toUpperCase() ? 0 : 1, code = t + 4 * c, s = r * NF + f;
+          const c = ch === ch.toUpperCase() ? 0 : 1, code = codeOf(c, t), s = r * NF + f;
           BRD[s] = code;
-          lo ^= ZLO[(code - 1) * NSQ + s]; hi ^= ZHI[(code - 1) * NSQ + s];
+          lo ^= ZLO[ZOFF[code] + s]; hi ^= ZHI[ZOFF[code] + s];
           if (t === KING) KSQ[c] = s; else men++;
           f++;
         }
@@ -143,6 +151,11 @@
       for (let u = s - 1, g = f - 1; g >= 0; u--, g--) { c = BRD[o + u]; if (c !== 0) { if (c === rook) return true; break; } }
       for (let u = s + NF; u < NSQ; u += NF) { c = BRD[o + u]; if (c !== 0) { if (c === rook) return true; break; } }
       for (let u = s - NF; u >= 0; u -= NF) { c = BRD[o + u]; if (c !== 0) { if (c === rook) return true; break; } }
+      const bishop = 9 + by;
+      for (let u = s + NF + 1, g = f + 1; g < NF && u < NSQ; u += NF + 1, g++) { c = BRD[o + u]; if (c !== 0) { if (c === bishop) return true; break; } }
+      for (let u = s + NF - 1, g = f - 1; g >= 0 && u < NSQ; u += NF - 1, g--) { c = BRD[o + u]; if (c !== 0) { if (c === bishop) return true; break; } }
+      for (let u = s - NF + 1, g = f + 1; g < NF && u >= 0; u -= NF - 1, g++) { c = BRD[o + u]; if (c !== 0) { if (c === bishop) return true; break; } }
+      for (let u = s - NF - 1, g = f - 1; g >= 0 && u >= 0; u -= NF + 1, g--) { c = BRD[o + u]; if (c !== 0) { if (c === bishop) return true; break; } }
       return false;
     }
 
@@ -154,13 +167,14 @@
     // ---------------------------------------------------------------- mosse
 
     const SQ_KING = new Int8Array(NSQ), SQ_KNIGHT = new Int8Array(NSQ), SQ_ROOK = new Int8Array(NSQ), SQ_PAWN = new Int8Array(NSQ);
+    const SQ_BISHOP = new Int8Array(NSQ);
     const RAY = new Int8Array(NR);
 
     // Mosse pseudo-legali del livello `ply` in MOVES[ply], nell'ordine di gen_moves! (Julia):
-    // re, cavalli, torri, pedoni, ciascun gruppo per case crescenti. Restituisce quante sono.
+    // re, cavalli, alfieri, torri, pedoni, ciascun gruppo per case crescenti. Restituisce quante sono.
     function genMoves(ply) {
       const o = ply * NSQ, list = MOVES[ply], us = TURN[ply];
-      let n = 0, nKing = 0, nKnight = 0, nRook = 0, nPawn = 0;
+      let n = 0, nKing = 0, nKnight = 0, nBishop = 0, nRook = 0, nPawn = 0;
       for (let s = 0; s < NSQ; s++) {
         const c = BRD[o + s];
         if (c === 0 || COLOR_OF[c] !== us) continue;
@@ -168,6 +182,7 @@
         if (t === PAWN) SQ_PAWN[nPawn++] = s;
         else if (t === KNIGHT) SQ_KNIGHT[nKnight++] = s;
         else if (t === ROOK) SQ_ROOK[nRook++] = s;
+        else if (t === BISHOP) SQ_BISHOP[nBishop++] = s;
         else SQ_KING[nKing++] = s;
       }
       const push = m => { if (n < MAXMOVES) list[n++] = m; };
@@ -184,6 +199,36 @@
         for (let j = 0; j < targets.length; j++) {
           const c = BRD[o + targets[j]];
           if (c === 0 || COLOR_OF[c] !== us) push(mk(s, targets[j], NORMAL, 1, KNIGHT, TYPE_OF[c]));
+        }
+      }
+      for (let i = 0; i < nBishop; i++) {
+        // Quante case raggiunge su ognuna delle quattro diagonali (compresa l'eventuale cattura);
+        // poi le case in ordine crescente: sotto dalle più lontane, sopra dalle più vicine.
+        const s = SQ_BISHOP[i], f = s % NF;
+        let dl = 0, dr = 0, ul = 0, ur = 0, c;
+        for (let u = s - NF - 1, g = f - 1; g >= 0 && u >= 0; u -= NF + 1, g--) {
+          c = BRD[o + u];
+          if (c === 0) dl++; else { if (COLOR_OF[c] !== us) dl++; break; }
+        }
+        for (let u = s - NF + 1, g = f + 1; g < NF && u >= 0; u -= NF - 1, g++) {
+          c = BRD[o + u];
+          if (c === 0) dr++; else { if (COLOR_OF[c] !== us) dr++; break; }
+        }
+        for (let u = s + NF - 1, g = f - 1; g >= 0 && u < NSQ; u += NF - 1, g--) {
+          c = BRD[o + u];
+          if (c === 0) ul++; else { if (COLOR_OF[c] !== us) ul++; break; }
+        }
+        for (let u = s + NF + 1, g = f + 1; g < NF && u < NSQ; u += NF + 1, g++) {
+          c = BRD[o + u];
+          if (c === 0) ur++; else { if (COLOR_OF[c] !== us) ur++; break; }
+        }
+        for (let k = dl > dr ? dl : dr; k >= 1; k--) {
+          if (k <= dl) { const u = s - k * (NF + 1); push(mk(s, u, NORMAL, 1, BISHOP, TYPE_OF[BRD[o + u]])); }
+          if (k <= dr) { const u = s - k * (NF - 1); push(mk(s, u, NORMAL, 1, BISHOP, TYPE_OF[BRD[o + u]])); }
+        }
+        for (let k = 1, top = ul > ur ? ul : ur; k <= top; k++) {
+          if (k <= ul) { const u = s + k * (NF - 1); push(mk(s, u, NORMAL, 1, BISHOP, TYPE_OF[BRD[o + u]])); }
+          if (k <= ur) { const u = s + k * (NF + 1); push(mk(s, u, NORMAL, 1, BISHOP, TYPE_OF[BRD[o + u]])); }
         }
       }
       for (let i = 0; i < nRook; i++) {
@@ -248,16 +293,16 @@
       let lo = KLO[ply], hi = KHI[ply], ep = -1, men = MEN[ply];
       KSQ[ply * 2 + 2] = KSQ[ply * 2]; KSQ[ply * 2 + 3] = KSQ[ply * 2 + 1];
       if (EP[ply] >= 0) { lo ^= ZLO[Z_EP + EP[ply]]; hi ^= ZHI[Z_EP + EP[ply]]; }
-      const code = us * 4 + piece;
+      const code = codeOf(us, piece);
       if (cap !== 0) {
-        const at = kind === ENPASSANT ? to - d : to, z = ((1 - us) * 4 + cap - 1) * NSQ + at;
+        const at = kind === ENPASSANT ? to - d : to, z = ZOFF[codeOf(1 - us, cap)] + at;
         lo ^= ZLO[z]; hi ^= ZHI[z];
         BRD[q + at] = 0;
         if (cap !== KING) men--;
       }
       // Il blocco che avanza di una casa equivale a spostare il pedone di coda davanti alla testa.
       const src = kind === BLOCK ? from - (mK(m) - 1) * d : from;
-      const z1 = (code - 1) * NSQ + src, z2 = (code - 1) * NSQ + to;
+      const z1 = ZOFF[code] + src, z2 = ZOFF[code] + to;
       lo ^= ZLO[z1] ^ ZLO[z2]; hi ^= ZHI[z1] ^ ZHI[z2];
       BRD[q + src] = 0;
       BRD[q + to] = code;
@@ -325,7 +370,7 @@
           if (c === PAWN) { if (r < LO_WHITE[f + 1]) LO_WHITE[f + 1] = r; }
           else if (r > HI_BLACK[f + 1]) HI_BLACK[f + 1] = r;
         }
-        if (c <= 4) white += PIECE_VALUE[t]; else black += PIECE_VALUE[t];
+        if (COLOR_OF[c] === 0) white += PIECE_VALUE[t]; else black += PIECE_VALUE[t];
       }
       for (let s = NF; s < NSQ - NF; s++) {
         const c = BRD[o + s];
@@ -357,7 +402,7 @@
       const size = 1 << (bits || 20), mask = size - 1;
       const ttLo = new Int32Array(size), ttHi = new Int32Array(size), ttMove = new Int32Array(size);
       const ttScore = new Int16Array(size), ttDepth = new Int8Array(size).fill(-1), ttFlag = new Int8Array(size);
-      const killers = new Int32Array(2 * MAXPLY), hist = new Int32Array(8 * NSQ);
+      const killers = new Int32Array(2 * MAXPLY), hist = new Int32Array(10 * NSQ);
       const pv = new Int32Array(MAXPLY * MAXPLY), pvlen = new Int32Array(MAXPLY + 1);
       let keysLo = [], keysHi = [];         // posizioni della partita e del ramo in esame
       let nodes = 0, deadline = Infinity, stopped = false;
@@ -374,7 +419,7 @@
 
       function scoreMoves(ply, n, ttmove) {
         const list = MOVES[ply], order = ORDER[ply], k1 = killers[2 * ply], k2 = killers[2 * ply + 1];
-        const h = TURN[ply] * 4 * NSQ;
+        const h = TURN[ply] * 5 * NSQ;
         for (let i = 0; i < n; i++) {
           const m = list[i], cap = mCap(m);
           order[i] = m === ttmove ? 2000000
@@ -500,7 +545,7 @@
           if (alpha >= beta) {
             if (mCap(m) === 0) {
               if (killers[2 * ply] !== m) { killers[2 * ply + 1] = killers[2 * ply]; killers[2 * ply] = m; }
-              hist[us * 4 * NSQ + (mPiece(m) - 1) * NSQ + mTo(m)] += depth * depth;
+              hist[us * 5 * NSQ + (mPiece(m) - 1) * NSQ + mTo(m)] += depth * depth;
             }
             break;
           }

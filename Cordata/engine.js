@@ -1,4 +1,4 @@
-// Motore delle regole di "Cordata", scacchi 5×8 con batterie di pedoni (REGOLE.md v1.1).
+// Motore delle regole di "Cordata", scacchi 5×8 con batterie di pedoni (REGOLE.md v1.2).
 // I numeri fra parentesi nei commenti rimandano ai paragrafi di REGOLE.md.
 // Funziona sia nel browser (globale `Engine`) sia in Node (module.exports).
 (function (root, factory) {
@@ -9,9 +9,10 @@
   'use strict';
 
   const NF = 5, NR = 8, N = NF * NR;                      // (1.1)
-  const KING = 'R', ROOK = 'T', KNIGHT = 'C', PAWN = 'P'; // re, torre, cavallo, pedone
+  const KING = 'R', ROOK = 'T', KNIGHT = 'C', BISHOP = 'A', PAWN = 'P'; // re, torre, cavallo, alfiere, pedone
   const FILE_NAMES = 'abcde';
-  const START = 'tcrct/ppppp/p1p1p/5/5/P1P1P/PPPPP/TCRCT B -'; // (2)
+  const CLASSIC = 'TCRCT';                                     // (2.4) disposizione classica della prima traversa
+  const START = 'tcrct/ppppp/p1p1p/5/5/P1P1P/PPPPP/TCRCT B -'; // (2.1) con la disposizione classica
 
   const sq = (f, r) => r * NF + f;
   const fileOf = s => s % NF;
@@ -29,11 +30,12 @@
   const KING_STEPS = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
   const KNIGHT_STEPS = [[-2, -1], [-1, -2], [1, -2], [2, -1], [-2, 1], [-1, 2], [1, 2], [2, 1]];
   const ROOK_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const BISHOP_DIRS = [[1, 1], [-1, 1], [1, -1], [-1, -1]];
 
   // ---------------------------------------------------------------- posizioni
 
   // Formato: traverse dall'ottava alla prima separate da "/", cifre per le case
-  // vuote, T C R P (maiuscole = Bianco, minuscole = Nero); poi chi muove (B o N)
+  // vuote, T C A R P (maiuscole = Bianco, minuscole = Nero); poi chi muove (B o N)
   // e la casa di presa en passant ("-" se non c'è).
   function parse(text) {
     const parts = String(text).trim().split(/\s+/);
@@ -45,7 +47,7 @@
       let f = 0;
       for (const ch of row) {
         if (/[1-5]/.test(ch)) { f += Number(ch); continue; }
-        if (!/[TCRPtcrp]/.test(ch)) throw new Error(`Simbolo non valido "${ch}" nella traversa ${r + 1}.`);
+        if (!/[TCARPtcarp]/.test(ch)) throw new Error(`Simbolo non valido "${ch}" nella traversa ${r + 1}.`);
         if (f >= NF) throw new Error(`La traversa ${r + 1} ha più di ${NF} case.`);
         board[sq(f, r)] = ch;
         f++;
@@ -82,6 +84,29 @@
   }
 
   const initial = () => parse(START);
+
+  // (2.2) Errori nella scelta dei cinque pezzi della prima traversa, scritti dalla
+  // colonna a alla colonna e (per esempio "TCRCT"); elenco vuoto se la scelta è valida.
+  function rankErrors(text) {
+    const rank = String(text).toUpperCase(), errors = [];
+    if (rank.length !== NF || /[^TCAR]/.test(rank)) {
+      return [`Servono ${NF} pezzi scelti fra re (R), torre (T), cavallo (C) e alfiere (A).`];
+    }
+    const count = t => rank.split(t).length - 1;
+    if (count(KING) !== 1) errors.push(`Serve esattamente un re (ce ne sono ${count(KING)}).`);
+    if (count(ROOK) > 2) errors.push(`Al massimo due torri (ce ne sono ${count(ROOK)}).`);
+    return errors;        // con cinque case e un re, cavalli e alfieri sono al massimo quattro
+  }
+
+  // (2) Posizione iniziale con le prime traverse scelte dai due giocatori, entrambe
+  // scritte dalla colonna a alla colonna e. I pedoni sono fissi (2.1).
+  function startPosition(white, black) {
+    for (const [name, rank] of [['Bianco', white], ['Nero', black]]) {
+      const errors = rankErrors(rank);
+      if (errors.length) throw new Error(`${name}: ${errors.join(' ')}`);
+    }
+    return parse(`${String(black).toLowerCase()}/ppppp/p1p1p/5/5/P1P1P/PPPPP/${String(white).toUpperCase()} B -`);
+  }
   const keyOf = st => st.board.join('') + st.turn + st.ep;
   const findKing = (board, c) => board.indexOf(c === 'w' ? 'R' : 'r');
 
@@ -117,6 +142,11 @@
       let ff = f + df, rr = r + dr;
       while (onBoard(ff, rr) && board[sq(ff, rr)] === '.') { ff += df; rr += dr; }
       if (has(ff, rr, ROOK)) out.push({ kind: 'piece', from: sq(ff, rr) });
+    }
+    for (const [df, dr] of BISHOP_DIRS) {
+      let ff = f + df, rr = r + dr;
+      while (onBoard(ff, rr) && board[sq(ff, rr)] === '.') { ff += df; rr += dr; }
+      if (has(ff, rr, BISHOP)) out.push({ kind: 'piece', from: sq(ff, rr) });
     }
     const d = dirOf(by);
     for (const df of [-1, 1]) if (has(f + df, r - d, PAWN)) out.push({ kind: 'piece', from: sq(f + df, r - d) }); // (4.3)
@@ -172,8 +202,8 @@
         for (const [df, dr] of t === KING ? KING_STEPS : KNIGHT_STEPS) {
           if (onBoard(f + df, r + dr) && colorOf(b[sq(f + df, r + dr)]) !== c) add(s, sq(f + df, r + dr), 'move');
         }
-      } else if (t === ROOK) {                                        // (3.2)
-        for (const [df, dr] of ROOK_DIRS) {
+      } else if (t === ROOK || t === BISHOP) {                        // (3.2)
+        for (const [df, dr] of t === ROOK ? ROOK_DIRS : BISHOP_DIRS) {
           let ff = f + df, rr = r + dr;
           while (onBoard(ff, rr)) {
             const q = b[sq(ff, rr)];
@@ -260,7 +290,7 @@
 
   // ---------------------------------------------------------------- notazione
 
-  // Pezzi: R re, T torre, C cavallo. "×" cattura. Avanzata in blocco di k pedoni:
+  // Pezzi: R re, T torre, C cavallo, A alfiere. "×" cattura. Avanzata in blocco di k pedoni:
   // casa d'arrivo del pedone di testa seguita da [k], per esempio b5[2] o b×b5[2].
   // Aggancio: colonna di partenza e casa d'arrivo senza "×", per esempio bc4.
   function san(st, m, legal) {
@@ -318,9 +348,9 @@
   }
 
   return {
-    NF, NR, N, KING, ROOK, KNIGHT, PAWN, FILE_NAMES, START,
+    NF, NR, N, KING, ROOK, KNIGHT, BISHOP, PAWN, FILE_NAMES, START, CLASSIC,
     sq, fileOf, rankOf, sqName, colorOf, typeOf, other, dirOf,
-    parse, serialize, initial, validate, keyOf, findKing,
+    parse, serialize, initial, rankErrors, startPosition, validate, keyOf, findKing,
     attackers, isAttacked, inCheck, batteries,
     pseudoMoves, legalMoves, arrives, apply, judge, san,
     createGame, play, truncate,
