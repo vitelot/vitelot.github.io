@@ -681,14 +681,16 @@ function bind() {
     render();
   });
 
+  // The teams change side and, inside each team, the defender goes forward.
+  const ACROSS = { rd: 'bf', rf: 'bd', bd: 'rf', bf: 'rd' };
   el.swap.addEventListener('click', () => {
     const n = { ...state.names };
     const typed = Object.fromEntries(BOXES.map((b) => [b, el.box[b].value]));
-    for (const [a, b] of [['rd', 'bd'], ['rf', 'bf']]) {
-      state.names[a] = n[b]; el.box[a].value = typed[b];
-      state.names[b] = n[a]; el.box[b].value = typed[a];
+    for (const b of BOXES) {
+      state.names[ACROSS[b]] = n[b];
+      el.box[ACROSS[b]].value = typed[b];
     }
-    if (state.askNew) state.askNew.box = { rd: 'bd', bd: 'rd', rf: 'bf', bf: 'rf' }[state.askNew.box];
+    if (state.askNew) state.askNew.box = ACROSS[state.askNew.box];
     if (state.winner) state.winner = state.winner === 'red' ? 'blue' : 'red';
     render();
   });
