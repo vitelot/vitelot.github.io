@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Biliardino: link for the group</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .link-form label { display: block; margin-top: 16px; font-weight: 700; }
+    .link-form input, .link-form textarea {
+      display: block; width: 100%; min-height: 48px; margin-top: 6px; padding: 10px;
+      border: 2px solid var(--line); border-radius: 10px; background: var(--chalk);
+      font: inherit; font-size: 16px;
+    }
+    .link-form textarea { min-height: 110px; overflow-wrap: anywhere; resize: vertical; }
+    .link-form .bad { color: var(--red); font-weight: 700; }
+    .link-form .row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .link-form p { max-width: 60ch; }
+  </style>
+</head>
+<body>
+  <main class="link-form">
+    <header class="top"><h1>Link for the group</h1></header>
+    <p>This page puts the address of the Google script and the group key into the link
+       that you share on WhatsApp. Whoever opens that link can enter games.
+       Nothing typed here is sent anywhere.</p>
+
+    <label for="link-url">Web app address, from Deploy in Apps Script</label>
+    <input id="link-url" data-testid="link-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+           placeholder="https://script.google.com/macros/s/…/exec">
+    <p id="link-error" class="bad" data-testid="link-error" hidden>This is not a Google Apps Script address. It starts with https://script.google.com/</p>
+
+    <label for="link-key">Group key, shown when setup is run</label>
+    <input id="link-key" data-testid="link-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+
+    <label for="link-out">Link to share</label>
+    <textarea id="link-out" data-testid="link-out" readonly></textarea>
+    <div class="row">
+      <button type="button" id="link-copy" class="solid" data-testid="link-copy" disabled>Copy link</button>
+      <span id="link-done" role="status"></span>
+    </div>
+  </main>
+  <script type="module" src="js/link.js"></script>
+</body>
+</html>

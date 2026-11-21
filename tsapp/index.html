@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1b6b45">
+  <title>Biliardino</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231b6b45'/%3E%3Cpath d='M16 3v26' stroke='%23fff' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="top">
+      <h1>Biliardino</h1>
+      <label class="date-field" for="date">
+        <span>Date</span>
+        <input type="date" id="date" data-testid="date" required>
+      </label>
+    </header>
+
+    <p id="gate" class="gate" data-testid="gate" hidden></p>
+
+    <form id="entry" novalidate autocomplete="off" hidden>
+      <section class="pitch" aria-label="Players">
+        <div class="pitch-head">
+          <span class="team-name red">Red</span>
+          <span class="team-name blue">Blue</span>
+        </div>
+        <div class="rod">
+          <input class="player red" id="box-rd" data-testid="box-rd" data-box="rd" type="text" inputmode="text"
+                 aria-label="Red defence" placeholder="Defence" maxlength="20"
+                 autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+          <span class="rod-name">Defence</span>
+          <input class="player blue" id="box-bd" data-testid="box-bd" data-box="bd" type="text" inputmode="text"
+                 aria-label="Blue defence" placeholder="Defence" maxlength="20"
+                 autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+        </div>
+        <div class="rod">
+          <input class="player red" id="box-rf" data-testid="box-rf" data-box="rf" type="text" inputmode="text"
+                 aria-label="Red forward" placeholder="Forward" maxlength="20"
+                 autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+          <span class="rod-name">Forward</span>
+          <input class="player blue" id="box-bf" data-testid="box-bf" data-box="bf" type="text" inputmode="text"
+                 aria-label="Blue forward" placeholder="Forward" maxlength="20"
+                 autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="next">
+        </div>
+      </section>
+
+      <div id="suggestions" class="names" data-testid="suggestions" role="listbox" aria-label="Players starting with these letters" hidden></div>
+
+      <div id="new-player" class="ask" hidden>
+        <p id="new-player-text" data-testid="new-player-text"></p>
+        <div class="ask-buttons">
+          <button type="button" id="cancel-player" data-testid="cancel-player" class="quiet">Cancel</button>
+          <button type="button" id="add-player" data-testid="add-player" class="solid">Add</button>
+        </div>
+      </div>
+
+      <div id="chips-row" class="chips-row" hidden>
+        <span class="chips-label">Today</span>
+        <div id="chips" class="names"></div>
+      </div>
+
+      <div class="players-tools">
+        <button type="button" id="swap-sides" data-testid="swap-sides" class="quiet">Swap sides</button>
+        <button type="button" id="clear-players" data-testid="clear-players" class="quiet">Clear players</button>
+      </div>
+
+      <fieldset class="score">
+        <legend>Who won?</legend>
+        <div class="winner">
+          <button type="button" id="win-red" data-testid="win-red" class="win red" aria-pressed="false">Red</button>
+          <button type="button" id="win-blue" data-testid="win-blue" class="win blue" aria-pressed="false">Blue</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="score">
+        <legend>Goals of the losing team</legend>
+        <div class="beads" id="beads"></div>
+        <div id="stepper" class="stepper" hidden>
+          <button type="button" id="loser-minus" data-testid="loser-minus" aria-label="One goal less">−</button>
+          <output id="loser-value" aria-live="polite">9</output>
+          <button type="button" id="loser-plus" data-testid="loser-plus" aria-label="One goal more">+</button>
+        </div>
+      </fieldset>
+
+      <output id="score-preview" class="scoreboard" data-testid="score-preview" aria-live="polite"></output>
+
+      <div class="save-row">
+        <button type="button" id="cancel-edit" data-testid="cancel-edit" class="quiet" hidden>Cancel</button>
+        <button type="submit" id="save" data-testid="save" class="solid save" disabled>Save game</button>
+      </div>
+      <p id="message" class="message" data-testid="message" role="status"></p>
+    </form>
+
+    <section id="day" class="day" hidden>
+      <div class="day-head">
+        <h2 id="day-title">Today's games</h2>
+        <div class="copy-buttons">
+          <button type="button" id="copy-all" data-testid="copy-all" class="quiet" hidden>Copy all</button>
+          <button type="button" id="copy" data-testid="copy" class="solid" hidden>Copy</button>
+        </div>
+      </div>
+      <div id="other-days" class="other-days" hidden></div>
+      <p id="sync-note" class="status" data-testid="sync-note" role="status" hidden></p>
+      <p id="status" class="status" data-testid="status" role="status" hidden></p>
+      <p id="empty" class="empty" hidden></p>
+      <ol id="games" class="games"></ol>
+    </section>
+  </main>
+
+  <div id="confirm" class="sheet" data-testid="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text" hidden>
+    <div class="sheet-body">
+      <p id="confirm-text" data-testid="confirm-text"></p>
+      <div class="ask-buttons">
+        <button type="button" id="confirm-no" data-testid="confirm-no" class="quiet">No</button>
+        <button type="button" id="confirm-yes" data-testid="confirm-yes" class="solid">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
